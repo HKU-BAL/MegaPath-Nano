@@ -2,7 +2,7 @@
 MegaPath-Nano is an Accurate Compositional Analysis and Drug-level Antimicrobial Resistance Detection Software for Oxford Nanopore Long-read Metagenomics
 
 ## Database Installation
-To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.\
+To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
 ```
 #download refseq:
 ./refseq_download.sh ${DB_DIR}
