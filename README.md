@@ -59,3 +59,9 @@ Optional Arguments:
     -h, --help
         Show help message and exit
 ```
+
+## Demo data
+
+Demo data for AMR detection of five patient isolates are available at:
+http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/.
+Samples were prepared using ONT Rapid Sequencing Kit,and sequenced using ONT R9.4.1 flowcells.
