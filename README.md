@@ -31,7 +31,6 @@ Required Arguments:
     --query
         Query file (fastq or fasta)
 
-
 Optional Arguments:
     --human
         Human genome set in config folder, default human.genome_set.
