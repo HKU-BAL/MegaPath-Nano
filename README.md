@@ -54,4 +54,6 @@ General options:
         Output Prefix, query file name will be used for output prefix by default.
     --output_folder
         Output folder, default ./.
+    -h, --help
+        Show help message and exit
 ```
