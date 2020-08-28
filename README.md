@@ -15,15 +15,10 @@ conda config --add channels bioconda
 conda config --add channels conda-forge
 
 #  Composition analysis module dependencies
-conda install -c anaconda pandas==0.23
-conda install -c anaconda -y psutil
-conda install -c bioconda -y pybedtools
-conda install -y qcat
-pip install bioconvert
+conda install -y pandas==0.23 psutil pybedtools qcat bioconvert
 
 #  AMR detection module dependencies
-conda install -c bioconda bcftools samtools cgecore pysam
-conda install -c conda-forge tabulate
+conda install bcftools samtools cgecore pysam conda-forge tabulate
 ```
 
 ## Git clone MegaPath-Nano
