@@ -7,7 +7,7 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Conda Virtual Environment Setup
 ```
-# prioritize channels
+#  prioritize channels
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
