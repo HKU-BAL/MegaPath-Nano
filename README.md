@@ -20,24 +20,22 @@ conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 
-#  composition analysis
+#  Composition analysis module dependencies
 conda install -c anaconda pandas==0.23
 conda install -c anaconda -y psutil
 conda install -c bioconda -y pybedtools
 conda install -y qcat
 pip install bioconvert
 
-#  AMR detection module
-conda install -c bioconda bcftools
-conda install -c bioconda samtools
+#  AMR detection module dependencies
+conda install -c bioconda bcftools samtools cgecore pysam
 conda install -c conda-forge tabulate
-conda install -c bioconda cgecore
-conda install -c bioconda pysam
 ```
+
 ## Database Installation
 To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
 ```
-#Download refseq:
+#Download RefSeq:
 ./refseq_download.sh ${DB_DIR}
 
 #Download taxnomy to get names.dmp and nodes.dmp:
