@@ -50,8 +50,7 @@ wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && tar xzf taxdump.t
 ./updateDB.sh ${DB_DIR} ${SQL_DIR} names.dmp nodes.dmp
 # and then follows the sqlite script in updateDB.sh to import data to SQL tables.
 ```
-## Usage
-For all available options, please check [Usage.md](docs/Usage.md)
+## Basic usage
 ```
 python megapath_nano.py --query ${FASTQ}
 
@@ -71,9 +70,22 @@ Optional Arguments:
     -h, --help
         Show help message and exit
 ```
+For all available options, please check [Usage.md](docs/Usage.md)
+
+
+## Advanced usage
+```
+(1) Run taxonomic analysis module only
+
+(2) Run AMR deteciton module only
+
+(3) To included user-specific reference sequences into the decoy database
+```
 
 ## Demo data
 
 Demo data for AMR detection of five patient isolates are available at:
+```
 http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/.
+```
 Samples were prepared using ONT Rapid Sequencing Kit,and sequenced using ONT R9.4.1 flowcells.
