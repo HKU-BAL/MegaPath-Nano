@@ -16,8 +16,7 @@ conda create -n mpn python=3.6
 conda activate mpn
 
 #  composition analysis module's dependencies
-conda install pandas==0.23 psutil pybedtools qcat
-pip install bioconvert
+conda install pandas==0.23 psutil pybedtools qcat bioconvert
 
 #  AMR detection module's dependencies
 conda install bcftools samtools cgecore pysam conda-forge tabulate
