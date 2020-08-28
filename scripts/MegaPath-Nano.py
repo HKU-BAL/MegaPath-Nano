@@ -1803,12 +1803,12 @@ def step_spike_filter(nanopath, spike_filter):
     nanopath.log.print('end')
 
 
-def step_human_similar_filter(nanopath, human_similar_filter):
+def step_human_repetitive_region_filter(nanopath, human_repetitive_region_filter):
 
     nanopath.log.print('start')
     nanopath.log.print_time()
 
-    RAM_dir_name = tempfile.mkdtemp(prefix='human_similar_filter.', dir=nanopath.RAM_dir_name)
+    RAM_dir_name = tempfile.mkdtemp(prefix='human_repetitive_region_filter.', dir=nanopath.RAM_dir_name)
 
     file_prefix_with_path = os.path.join(nanopath.output_folder, nanopath.output_prefix)
 
@@ -1819,7 +1819,7 @@ def step_human_similar_filter(nanopath, human_similar_filter):
     file_extension = 'asm20'
     aligner_option = shlex.split(similarity_option(divergence=20) + ' ' + nanopath.global_options['alignerThreadOption'] + ' -N 10000 -p 0')
 
-    assembly_path = nanopath.assembly_metadata.get_assembly_path(assembly_list=human_similar_filter.I.assembly_list)
+    assembly_path = nanopath.assembly_metadata.get_assembly_path(assembly_list=human_repetitive_region_filter.I.assembly_list)
     assembly_path['path'] = assembly_path['path'].map(lambda x: os.path.join(nanopath.global_options['assembly_folder'], x))
 
     num_assembly_id = assembly_path.shape[0]
@@ -1832,7 +1832,7 @@ def step_human_similar_filter(nanopath, human_similar_filter):
 
     for index in range(num_assembly_id):
 
-        bed_filename = os.path.join(os.path.split(assembly_path.iloc[index]['path'])[0], nanopath.global_options['human_similar_filter_assembly_id'] + '-' + assembly_path.iloc[index]['assembly_id']) + '.' + file_extension
+        bed_filename = os.path.join(os.path.split(assembly_path.iloc[index]['path'])[0], nanopath.global_options['human_repetitive_region_filter_assembly_id'] + '-' + assembly_path.iloc[index]['assembly_id']) + '.' + file_extension
 
         bed_list = None
         if os.path.exists(bed_filename) == True:
@@ -1856,7 +1856,7 @@ def step_human_similar_filter(nanopath, human_similar_filter):
                            global_options=nanopath.global_options,
                            temp_dir_name=RAM_dir_name,
                            log_file=nanopath.aligner_log,
-                           query_assembly_list=pandas.DataFrame(data={'assembly_id': [nanopath.global_options['human_similar_filter_assembly_id'],]}),
+                           query_assembly_list=pandas.DataFrame(data={'assembly_id': [nanopath.global_options['human_repetitive_region_filter_assembly_id'],]}),
                            target_assembly_list=assembly_path_without_bed,
                            aligner_options=aligner_option,
                            mapping_only=nanopath.global_options['mapping_only'],
@@ -1880,25 +1880,25 @@ def step_human_similar_filter(nanopath, human_similar_filter):
         for index in range(num_assembly_id_without_bed):
             assembly_id = assembly_path_without_bed.iloc[index]['assembly_id']
             assembly_bed_list = align_bed_list.query('target_assembly_id == @assembly_id')
-            align_bed_filename = os.path.join(os.path.split(assembly_path_without_bed.iloc[index]['path'])[0], nanopath.global_options['human_similar_filter_assembly_id'] + '-' + assembly_id) + '.' + file_extension
+            align_bed_filename = os.path.join(os.path.split(assembly_path_without_bed.iloc[index]['path'])[0], nanopath.global_options['human_repetitive_region_filter_assembly_id'] + '-' + assembly_id) + '.' + file_extension
             print(align_bed_filename)
 
             assembly_bed_list.to_csv(path_or_buf=align_bed_filename, sep='\t', header=True, index=False, columns=bed_list_col_name)
 
     if all_bed_list.empty == False:
-        human_similar_filter.O.noise_bed = align_list_to_bed(align_list=all_bed_list.rename(columns={
+        human_repetitive_region_filter.O.noise_bed = align_list_to_bed(align_list=all_bed_list.rename(columns={
                                                                                                      'target_sequence_id': 'sequence_id',
                                                                                                      'target_sequence_from': 'sequence_from',
                                                                                                      'target_sequence_to': 'sequence_to',
                                                                                                      'target_assembly_id': 'assembly_id',
                                                                                                     }))
-        covered_bp = bed_to_covered_bp_by_assembly_id(bed=human_similar_filter.O.noise_bed)
+        covered_bp = bed_to_covered_bp_by_assembly_id(bed=human_repetitive_region_filter.O.noise_bed)
     else:
-        human_similar_filter.O.noise_bed = BedTool('', from_string=True)
+        human_repetitive_region_filter.O.noise_bed = BedTool('', from_string=True)
         covered_bp = pandas.DataFrame(columns=['assembly_id', 'covered_bp'])
         covered_bp['covered_bp'] = covered_bp['covered_bp'].astype('int')
 
-    noise_span_bp = human_similar_filter.I.assembly_list[['assembly_id']].merge(
+    noise_span_bp = human_repetitive_region_filter.I.assembly_list[['assembly_id']].merge(
                                                                                 right=covered_bp.rename(columns={'covered_bp':'noise_span_bp'}).set_index(['assembly_id']),
                                                                                 how='left', 
                                                                                 left_on='assembly_id',
@@ -1908,10 +1908,10 @@ def step_human_similar_filter(nanopath, human_similar_filter):
                                                                                ).fillna(0).copy()
     noise_span_bp['noise_span_bp'] = noise_span_bp['noise_span_bp'].astype('int')
 
-    human_similar_filter.O.noise_stat = nanopath.assembly_metadata.get_assembly_length(assembly_list=human_similar_filter.I.assembly_list, how='left').fillna(0)
-    human_similar_filter.O.noise_stat['assembly_length'] = human_similar_filter.O.noise_stat['assembly_length'].astype('int')
+    human_repetitive_region_filter.O.noise_stat = nanopath.assembly_metadata.get_assembly_length(assembly_list=human_repetitive_region_filter.I.assembly_list, how='left').fillna(0)
+    human_repetitive_region_filter.O.noise_stat['assembly_length'] = human_repetitive_region_filter.O.noise_stat['assembly_length'].astype('int')
 
-    human_similar_filter.O.noise_stat = human_similar_filter.O.noise_stat.merge(
+    human_repetitive_region_filter.O.noise_stat = human_repetitive_region_filter.O.noise_stat.merge(
                                                                                 right=noise_span_bp.set_index('assembly_id').rename(columns={'noise_span_bp': 'human_span_bp'}),
                                                                                 how='inner', 
                                                                                 left_on='assembly_id', 
@@ -1919,11 +1919,11 @@ def step_human_similar_filter(nanopath, human_similar_filter):
                                                                                 suffixes=['', '_y'],
                                                                                 validate='1:1',
                                                                                )
-    human_similar_filter.O.noise_stat = human_similar_filter.O.noise_stat.assign(human_span_percent = lambda x: x['human_span_bp'] / x['assembly_length'])[['assembly_id', 'human_span_bp', 'human_span_percent']]
+    human_repetitive_region_filter.O.noise_stat = human_repetitive_region_filter.O.noise_stat.assign(human_span_percent = lambda x: x['human_span_bp'] / x['assembly_length'])[['assembly_id', 'human_span_bp', 'human_span_percent']]
 
-    human_similar_filter.O.noise_summary = human_similar_filter.O.noise_stat['human_span_percent'].describe()
+    human_repetitive_region_filter.O.noise_summary = human_repetitive_region_filter.O.noise_stat['human_span_percent'].describe()
 
-    nanopath.log.print('filter summary - average noise span: {average:.2%} - max noise span: {max:.2%}'.format(average=human_similar_filter.O.noise_summary.loc['mean'], max=human_similar_filter.O.noise_summary.loc['max']))
+    nanopath.log.print('filter summary - average noise span: {average:.2%} - max noise span: {max:.2%}'.format(average=human_repetitive_region_filter.O.noise_summary.loc['mean'], max=human_repetitive_region_filter.O.noise_summary.loc['max']))
     nanopath.log.print('end')
 
 
@@ -1962,32 +1962,32 @@ def step_approx_abundance(nanopath, approx_abundance):
     nanopath.log.print('end')
 
 
-def step_microbe_similar_filter(nanopath, microbe_similar_filter):
+def step_microbe_repetitive_region_filter(nanopath, microbe_repetitive_region_filter):
 
     nanopath.log.print('start')
     nanopath.log.print_time()
 
-    nanopath.log.print('Apply 99.2% similarity filter when a species is {num_fold} times more abundant than another species (same genus only)'.format(num_fold=microbe_similar_filter.I.abundance_threshold_99_2))
-    nanopath.log.print('Apply 99.0% similarity filter when a species is {num_fold} times more abundant than another species (same genus only)'.format(num_fold=microbe_similar_filter.I.abundance_threshold_99))
-    nanopath.log.print('Apply 98.0% similarity filter when a species is {num_fold} times more abundant than another species (same genus only)'.format(num_fold=microbe_similar_filter.I.abundance_threshold_98))
-    nanopath.log.print('Apply 95.0% similarity filter when a species is {num_fold} times more abundant than another species'.format(num_fold=microbe_similar_filter.I.abundance_threshold_95))
-    nanopath.log.print('Apply 90.0% similarity filter when a species is {num_fold} times more abundant than another species'.format(num_fold=microbe_similar_filter.I.abundance_threshold_90))
-    nanopath.log.print('Apply 80.0% similarity filter when a species is {num_fold} times more abundant than another species'.format(num_fold=microbe_similar_filter.I.abundance_threshold_80))
-    nanopath.log.print('Targeted max span of similar region = {span:.0%}'.format(span=microbe_similar_filter.I.targeted_max_span_percent / 100))
-    nanopath.log.print('Allowed max span of similar region = {span:.0%}'.format(span=microbe_similar_filter.I.allowed_max_span_percent / 100))
+    nanopath.log.print('Apply 99.2% similarity filter when a species is {num_fold} times more abundant than another species (same genus only)'.format(num_fold=microbe_repetitive_region_filter.I.abundance_threshold_99_2))
+    nanopath.log.print('Apply 99.0% similarity filter when a species is {num_fold} times more abundant than another species (same genus only)'.format(num_fold=microbe_repetitive_region_filter.I.abundance_threshold_99))
+    nanopath.log.print('Apply 98.0% similarity filter when a species is {num_fold} times more abundant than another species (same genus only)'.format(num_fold=microbe_repetitive_region_filter.I.abundance_threshold_98))
+    nanopath.log.print('Apply 95.0% similarity filter when a species is {num_fold} times more abundant than another species'.format(num_fold=microbe_repetitive_region_filter.I.abundance_threshold_95))
+    nanopath.log.print('Apply 90.0% similarity filter when a species is {num_fold} times more abundant than another species'.format(num_fold=microbe_repetitive_region_filter.I.abundance_threshold_90))
+    nanopath.log.print('Apply 80.0% similarity filter when a species is {num_fold} times more abundant than another species'.format(num_fold=microbe_repetitive_region_filter.I.abundance_threshold_80))
+    nanopath.log.print('Targeted max span of similar region = {span:.0%}'.format(span=microbe_repetitive_region_filter.I.targeted_max_span_percent / 100))
+    nanopath.log.print('Allowed max span of similar region = {span:.0%}'.format(span=microbe_repetitive_region_filter.I.allowed_max_span_percent / 100))
 
 
-    RAM_dir_name = tempfile.mkdtemp(prefix='microbe_similar_filter.', dir=nanopath.RAM_dir_name)
+    RAM_dir_name = tempfile.mkdtemp(prefix='microbe_repetitive_region_filter.', dir=nanopath.RAM_dir_name)
 
     file_prefix_with_path = os.path.join(nanopath.output_folder, nanopath.output_prefix)
 
-    abundance_measure = microbe_similar_filter.I.align_stat[['assembly_id', 'adjusted_average_depth']].sort_values(['adjusted_average_depth']).copy().reset_index()
+    abundance_measure = microbe_repetitive_region_filter.I.align_stat[['assembly_id', 'adjusted_average_depth']].sort_values(['adjusted_average_depth']).copy().reset_index()
     abundance_measure = nanopath.assembly_metadata.get_tax_id(assembly_list=abundance_measure, how='left').fillna(0)
     abundance_measure = nanopath.assembly_metadata.get_assembly_length(assembly_list=abundance_measure, how='left').fillna(0)
 
     num_assembly_id = abundance_measure.shape[0]
 
-    microbe_similar_filter.O.noise_bed = BedTool('', from_string=True)
+    microbe_repetitive_region_filter.O.noise_bed = BedTool('', from_string=True)
     source_target_noise_span_bp = pandas.DataFrame(columns=['source_assembly_id', 'target_assembly_id', 'microbe_span_bp'])
     source_target_noise_span_bp['microbe_span_bp'] = source_target_noise_span_bp['microbe_span_bp'].astype('int')
 
@@ -2018,33 +2018,33 @@ def step_microbe_similar_filter(nanopath, microbe_similar_filter):
 
     # iloc returns a transposed series if input is an integer; returns a dataframe if input is a list
     for high_abundance_index in range(num_assembly_id - 1, 0, -1):
-        if abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] < abundance_measure.iloc[0]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_98:
+        if abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] < abundance_measure.iloc[0]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_98:
             break
-        if abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] < microbe_similar_filter.I.min_average_depth:
+        if abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] < microbe_repetitive_region_filter.I.min_average_depth:
             break
 
         high_abundance_uncompressed_exists = False
 
         for low_abundance_index in range(min_low_abundance_index, high_abundance_index):
 
-            if abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_80:
+            if abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_80:
                 similarity_index = 1
-            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_90:
+            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_90:
                 similarity_index = 2
-            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_95:
+            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_95:
                 similarity_index = 3
-            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_98:
-                if abundance_measure.iloc[high_abundance_index]['genus_tax_id'] != 0 and abundance_measure.iloc[high_abundance_index]['genus_height'] <= microbe_similar_filter.I.genus_height and abundance_measure.iloc[high_abundance_index]['genus_tax_id'] == abundance_measure.iloc[low_abundance_index]['genus_tax_id']:
+            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_98:
+                if abundance_measure.iloc[high_abundance_index]['genus_tax_id'] != 0 and abundance_measure.iloc[high_abundance_index]['genus_height'] <= microbe_repetitive_region_filter.I.genus_height and abundance_measure.iloc[high_abundance_index]['genus_tax_id'] == abundance_measure.iloc[low_abundance_index]['genus_tax_id']:
                     similarity_index = 4
                 else:
                     continue
-            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_99:
-                if abundance_measure.iloc[high_abundance_index]['genus_tax_id'] != 0 and abundance_measure.iloc[high_abundance_index]['genus_height'] <= microbe_similar_filter.I.genus_height and abundance_measure.iloc[high_abundance_index]['genus_tax_id'] == abundance_measure.iloc[low_abundance_index]['genus_tax_id']:
+            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_99:
+                if abundance_measure.iloc[high_abundance_index]['genus_tax_id'] != 0 and abundance_measure.iloc[high_abundance_index]['genus_height'] <= microbe_repetitive_region_filter.I.genus_height and abundance_measure.iloc[high_abundance_index]['genus_tax_id'] == abundance_measure.iloc[low_abundance_index]['genus_tax_id']:
                     similarity_index = 5
                 else:
                     continue
-            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_similar_filter.I.abundance_threshold_99_2:
-                if abundance_measure.iloc[high_abundance_index]['genus_tax_id'] != 0 and abundance_measure.iloc[high_abundance_index]['genus_height'] <= microbe_similar_filter.I.genus_height and abundance_measure.iloc[high_abundance_index]['genus_tax_id'] == abundance_measure.iloc[low_abundance_index]['genus_tax_id']:
+            elif abundance_measure.iloc[high_abundance_index]['adjusted_average_depth'] >= abundance_measure.iloc[low_abundance_index]['adjusted_average_depth'] * microbe_repetitive_region_filter.I.abundance_threshold_99_2:
+                if abundance_measure.iloc[high_abundance_index]['genus_tax_id'] != 0 and abundance_measure.iloc[high_abundance_index]['genus_height'] <= microbe_repetitive_region_filter.I.genus_height and abundance_measure.iloc[high_abundance_index]['genus_tax_id'] == abundance_measure.iloc[low_abundance_index]['genus_tax_id']:
                     similarity_index = 6
                 else:
                     continue
@@ -2150,9 +2150,9 @@ def step_microbe_similar_filter(nanopath, microbe_similar_filter):
                 if bed_list is not None and bed_list.empty == False:
                     covered_bp = bed_list.assign(covered_bp = lambda x: x['target_sequence_to'] - x['target_sequence_from']).sum()['covered_bp']
                     covered_percent = covered_bp / abundance_measure.iloc[low_abundance_index]['assembly_length'] * 100
-                    if covered_percent > microbe_similar_filter.I.targeted_max_span_percent:
+                    if covered_percent > microbe_repetitive_region_filter.I.targeted_max_span_percent:
                         if similarity_index >= 6:
-                            if covered_percent > microbe_similar_filter.I.allowed_max_span_percent:
+                            if covered_percent > microbe_repetitive_region_filter.I.allowed_max_span_percent:
                                 bed_list = None
                             break
                         else:
@@ -2176,7 +2176,7 @@ def step_microbe_similar_filter(nanopath, microbe_similar_filter):
             #                                                                                                                                              source_assembly_id = lambda x: abundance_measure.iloc[high_abundance_index]['assembly_id'],
             #                                                                                                                                             )
             #     covered_percent = covered_bp / abundance_measure.iloc[low_abundance_index]['assembly_length'] * 100
-            #     if covered_percent > microbe_similar_filter.I.max_span_percent_overall:
+            #     if covered_percent > microbe_repetitive_region_filter.I.max_span_percent_overall:
             #         nanopath.log.print('Max span percent exceeded (overall): ' + abundance_measure.iloc[low_abundance_index]['assembly_id'] + ' - ' + str(covered_percent))
             #     else:
             #         all_bed_list = pandas.concat([all_bed_list, bed_list], axis=0)
@@ -2185,9 +2185,9 @@ def step_microbe_similar_filter(nanopath, microbe_similar_filter):
             os.remove(assembly_path.iloc[high_abundance_index]['uncompressed_path'])
 
     if all_bed_list.empty == True:
-        microbe_similar_filter.O.source_target_noise_span_bp = pandas.DataFrame(columns=['target_assembly_id', 'source_assembly_id', 'microbe_span_bp'])
-        microbe_similar_filter.O.source_target_noise_span_bp['microbe_span_bp'] = microbe_similar_filter.O.source_target_noise_span_bp['microbe_span_bp'].astype('int')
-        microbe_similar_filter.O.noise_bed = BedTool('', from_string=True)
+        microbe_repetitive_region_filter.O.source_target_noise_span_bp = pandas.DataFrame(columns=['target_assembly_id', 'source_assembly_id', 'microbe_span_bp'])
+        microbe_repetitive_region_filter.O.source_target_noise_span_bp['microbe_span_bp'] = microbe_repetitive_region_filter.O.source_target_noise_span_bp['microbe_span_bp'].astype('int')
+        microbe_repetitive_region_filter.O.noise_bed = BedTool('', from_string=True)
         covered_bp = pandas.DataFrame(columns=['assembly_id', 'covered_bp'])
         covered_bp['covered_bp'] = covered_bp['covered_bp'].astype('int')
     else:
@@ -2204,23 +2204,23 @@ def step_microbe_similar_filter(nanopath, microbe_similar_filter):
         os.remove(source_target_noise_bed.fn)
         source_target_noise_bed_df = pandas.concat([source_target_noise_bed_df['name'].str.split(';', n=1, expand=True).rename(columns={0:'target_assembly_id', 1:'source_assembly_id'}), source_target_noise_bed_df[['start', 'end']]], axis=1)
 
-        microbe_similar_filter.O.source_target_noise_span_bp = source_target_noise_bed_df.assign(microbe_span_bp = lambda x: x['end'] - x['start'])
-        microbe_similar_filter.O.source_target_noise_span_bp = microbe_similar_filter.O.source_target_noise_span_bp.groupby(['target_assembly_id', 'source_assembly_id'], as_index=False).sum()
-        microbe_similar_filter.O.source_target_noise_span_bp = microbe_similar_filter.O.source_target_noise_span_bp[['target_assembly_id', 'source_assembly_id', 'microbe_span_bp']]
+        microbe_repetitive_region_filter.O.source_target_noise_span_bp = source_target_noise_bed_df.assign(microbe_span_bp = lambda x: x['end'] - x['start'])
+        microbe_repetitive_region_filter.O.source_target_noise_span_bp = microbe_repetitive_region_filter.O.source_target_noise_span_bp.groupby(['target_assembly_id', 'source_assembly_id'], as_index=False).sum()
+        microbe_repetitive_region_filter.O.source_target_noise_span_bp = microbe_repetitive_region_filter.O.source_target_noise_span_bp[['target_assembly_id', 'source_assembly_id', 'microbe_span_bp']]
 
-        microbe_similar_filter.O.noise_bed = align_list_to_bed(align_list=all_bed_list.rename(columns={
+        microbe_repetitive_region_filter.O.noise_bed = align_list_to_bed(align_list=all_bed_list.rename(columns={
                                                                                                        'target_assembly_id': 'assembly_id',
                                                                                                        'target_sequence_id': 'sequence_id',
                                                                                                        'target_sequence_from': 'sequence_from',
                                                                                                        'target_sequence_to': 'sequence_to',
                                                                                                       }))
  
-        covered_bp = bed_to_covered_bp_by_assembly_id(bed=microbe_similar_filter.O.noise_bed)
+        covered_bp = bed_to_covered_bp_by_assembly_id(bed=microbe_repetitive_region_filter.O.noise_bed)
     
-    microbe_similar_filter.O.noise_stat = nanopath.assembly_metadata.get_assembly_length(assembly_list=microbe_similar_filter.I.assembly_list, how='left').fillna(0)
-    microbe_similar_filter.O.noise_stat['assembly_length'] = microbe_similar_filter.O.noise_stat['assembly_length'].astype('int')
+    microbe_repetitive_region_filter.O.noise_stat = nanopath.assembly_metadata.get_assembly_length(assembly_list=microbe_repetitive_region_filter.I.assembly_list, how='left').fillna(0)
+    microbe_repetitive_region_filter.O.noise_stat['assembly_length'] = microbe_repetitive_region_filter.O.noise_stat['assembly_length'].astype('int')
 
-    microbe_similar_filter.O.noise_stat = microbe_similar_filter.O.noise_stat.merge(
+    microbe_repetitive_region_filter.O.noise_stat = microbe_repetitive_region_filter.O.noise_stat.merge(
                                                                                   right=covered_bp.set_index('assembly_id').rename(columns={'covered_bp': 'microbe_span_bp'}),
                                                                                   how='left', 
                                                                                   left_on='assembly_id', 
@@ -2228,16 +2228,16 @@ def step_microbe_similar_filter(nanopath, microbe_similar_filter):
                                                                                   suffixes=['', '_y'],
                                                                                   validate='1:1',
                                                                                  ).fillna(0)
-    microbe_similar_filter.O.noise_stat['microbe_span_bp'] = microbe_similar_filter.O.noise_stat['microbe_span_bp'].astype('int')
+    microbe_repetitive_region_filter.O.noise_stat['microbe_span_bp'] = microbe_repetitive_region_filter.O.noise_stat['microbe_span_bp'].astype('int')
 
-    microbe_similar_filter.O.noise_stat = microbe_similar_filter.O.noise_stat.assign(microbe_span_percent = lambda x: x['microbe_span_bp'] / x['assembly_length'])[['assembly_id', 'microbe_span_bp', 'microbe_span_percent']]
+    microbe_repetitive_region_filter.O.noise_stat = microbe_repetitive_region_filter.O.noise_stat.assign(microbe_span_percent = lambda x: x['microbe_span_bp'] / x['assembly_length'])[['assembly_id', 'microbe_span_bp', 'microbe_span_percent']]
 
-    microbe_similar_filter.O.noise_summary = microbe_similar_filter.O.noise_stat['microbe_span_percent'].describe()
+    microbe_repetitive_region_filter.O.noise_summary = microbe_repetitive_region_filter.O.noise_stat['microbe_span_percent'].describe()
 
     if nanopath.global_options['debug'] == False:
         shutil.rmtree(RAM_dir_name)
 
-    nanopath.log.print('filter summary - average noise span: {average:.2%} - max noise span: {max:.2%}'.format(average=microbe_similar_filter.O.noise_summary.loc['mean'], max=microbe_similar_filter.O.noise_summary.loc['max']))
+    nanopath.log.print('filter summary - average noise span: {average:.2%} - max noise span: {max:.2%}'.format(average=microbe_repetitive_region_filter.O.noise_summary.loc['mean'], max=microbe_repetitive_region_filter.O.noise_summary.loc['max']))
     nanopath.log.print('end')
 
 
@@ -3286,7 +3286,7 @@ def step_format_output(nanopath, options):
                                                                             nanopath.decoy_assembly_list[['assembly_id']],
                                                                             nanopath.species_id_assembly_list[['assembly_id']],
                                                                             nanopath.assembly_id_assembly_list[['assembly_id']],
-                                                                            pandas.DataFrame(data={'assembly_id': [nanopath.global_options['human_similar_filter_assembly_id'],]})
+                                                                            pandas.DataFrame(data={'assembly_id': [nanopath.global_options['human_repetitive_region_filter_assembly_id'],]})
                                                                            ], axis=0).sort_values(['assembly_id']).drop_duplicates()
                                               )
     nanopath.assembly_info = nanopath.assembly_info.merge(
@@ -3706,15 +3706,15 @@ def step_format_output(nanopath, options):
 
     nanopath.noise_bed.moveto(os.path.join(file_prefix_with_path + '.noise.bed'))
 
-    nanopath.similar_noise_bed = merge_bed_with_assembly_id(bed_list=[nanopath.human_similar_noise_bed, nanopath.microbe_similar_noise_bed])
+    nanopath.similar_noise_bed = merge_bed_with_assembly_id(bed_list=[nanopath.human_repetitive_region_noise_bed, nanopath.microbe_repetitive_region_noise_bed])
 
-    if options.output_separate_noise_bed == True and (options.spike_filter == True or options.human_similar_filter == True or options.microbe_similar_filter == True):
+    if options.output_separate_noise_bed == True and (options.spike_filter == True or options.human_repetitive_region_filter == True or options.microbe_repetitive_region_filter == True):
         if options.spike_filter == True:
             nanopath.spike_noise_bed.moveto(file_prefix_with_path + '.spike_noise.bed')
-        if options.human_similar_filter == True:
-            nanopath.human_similar_noise_bed.moveto(file_prefix_with_path + '.human_noise.bed')
-        if options.microbe_similar_filter == True:
-            nanopath.microbe_similar_noise_bed.moveto(file_prefix_with_path + '.microbe_noise.bed')
+        if options.human_repetitive_region_filter == True:
+            nanopath.human_repetitive_region_noise_bed.moveto(file_prefix_with_path + '.human_noise.bed')
+        if options.microbe_repetitive_region_filter == True:
+            nanopath.microbe_repetitive_region_noise_bed.moveto(file_prefix_with_path + '.microbe_noise.bed')
         if options.closing_spike_filter == True:
             nanopath.closing_spike_noise_bed.moveto(file_prefix_with_path + '.closing_spike_noise.bed')
 
@@ -3809,15 +3809,15 @@ def step_format_output(nanopath, options):
 
         nanopath.similar_noise_span_bp = pandas.DataFrame(columns=similar_noise_span_bp_col_name)
 
-        if options.human_similar_filter == True:
-            human_similar_noise_span_bp = nanopath.noise_detection_stat.query('human_span_bp > 0')[['assembly_id', 'human_span_bp']].rename(columns={'assembly_id': 'target_assembly_id', 'human_span_bp': 'microbe_span_bp'})
-            human_similar_noise_span_bp = human_similar_noise_span_bp.assign(source_assembly_id = lambda x: nanopath.global_options['human_similar_filter_assembly_id'])
-            nanopath.similar_noise_span_bp = pandas.concat([nanopath.similar_noise_span_bp, human_similar_noise_span_bp], axis=0,sort=True)
+        if options.human_repetitive_region_filter == True:
+            human_repetitive_region_noise_span_bp = nanopath.noise_detection_stat.query('human_span_bp > 0')[['assembly_id', 'human_span_bp']].rename(columns={'assembly_id': 'target_assembly_id', 'human_span_bp': 'microbe_span_bp'})
+            human_repetitive_region_noise_span_bp = human_repetitive_region_noise_span_bp.assign(source_assembly_id = lambda x: nanopath.global_options['human_repetitive_region_filter_assembly_id'])
+            nanopath.similar_noise_span_bp = pandas.concat([nanopath.similar_noise_span_bp, human_repetitive_region_noise_span_bp], axis=0,sort=True)
 
-        if options.microbe_similar_filter == True:
+        if options.microbe_repetitive_region_filter == True:
             nanopath.similar_noise_span_bp = pandas.concat([nanopath.similar_noise_span_bp, nanopath.source_target_noise_span_bp], axis=0,sort=True)
 
-        if options.human_similar_filter == True or options.microbe_similar_filter == True:
+        if options.human_repetitive_region_filter == True or options.microbe_repetitive_region_filter == True:
             nanopath.similar_noise_span_bp = nanopath.similar_noise_span_bp.merge(
                                                                                   right=bed_to_covered_bp_by_assembly_id(bed=nanopath.similar_noise_bed).set_index('assembly_id'),
                                                                                   how='left', 
@@ -3896,7 +3896,7 @@ def main():
                                'adaptor_trimming_log':FLAGS.adaptor_trimming_log,
                                'python':FLAGS.python,
 
-                               'human_similar_filter_assembly_id':FLAGS.human_similar_filter_assembly_id,
+                               'human_repetitive_region_filter_assembly_id':FLAGS.human_repetitive_region_filter_assembly_id,
 
                                'max_aligner_thread':FLAGS.max_aligner_thread,
                                'max_qcat_thread':FLAGS.max_qcat_thread,
@@ -3938,16 +3938,16 @@ def main():
                                'similar_species_marker_alignment_similarity_2':FLAGS.similar_species_marker_alignment_similarity_2,
                                'similar_species_marker_aligned_region_threshold_2':FLAGS.similar_species_marker_aligned_region_threshold_2,
                                'similar_species_marker_similarity_combine_logic':FLAGS.similar_species_marker_similarity_combine_logic,
-                               'microbe_similar_filter_abundance_threshold_80':FLAGS.microbe_similar_filter_abundance_threshold_80,
-                               'microbe_similar_filter_abundance_threshold_90':FLAGS.microbe_similar_filter_abundance_threshold_90,
-                               'microbe_similar_filter_abundance_threshold_95':FLAGS.microbe_similar_filter_abundance_threshold_95,
-                               'microbe_similar_filter_abundance_threshold_98':FLAGS.microbe_similar_filter_abundance_threshold_98,
-                               'microbe_similar_filter_abundance_threshold_99':FLAGS.microbe_similar_filter_abundance_threshold_99,
-                               'microbe_similar_filter_abundance_threshold_99_2':FLAGS.microbe_similar_filter_abundance_threshold_99_2,
-                               'microbe_similar_filter_targeted_max_span_percent':FLAGS.microbe_similar_filter_targeted_max_span_percent,
-                               'microbe_similar_filter_allowed_max_span_percent':FLAGS.microbe_similar_filter_allowed_max_span_percent,
-                               'microbe_similar_filter_min_average_depth':FLAGS.microbe_similar_filter_min_average_depth,
-                               'microbe_similar_filter_max_span_percent_overall':FLAGS.microbe_similar_filter_max_span_percent_overall,
+                               'microbe_repetitive_region_filter_abundance_threshold_80':FLAGS.microbe_repetitive_region_filter_abundance_threshold_80,
+                               'microbe_repetitive_region_filter_abundance_threshold_90':FLAGS.microbe_repetitive_region_filter_abundance_threshold_90,
+                               'microbe_repetitive_region_filter_abundance_threshold_95':FLAGS.microbe_repetitive_region_filter_abundance_threshold_95,
+                               'microbe_repetitive_region_filter_abundance_threshold_98':FLAGS.microbe_repetitive_region_filter_abundance_threshold_98,
+                               'microbe_repetitive_region_filter_abundance_threshold_99':FLAGS.microbe_repetitive_region_filter_abundance_threshold_99,
+                               'microbe_repetitive_region_filter_abundance_threshold_99_2':FLAGS.microbe_repetitive_region_filter_abundance_threshold_99_2,
+                               'microbe_repetitive_region_filter_targeted_max_span_percent':FLAGS.microbe_repetitive_region_filter_targeted_max_span_percent,
+                               'microbe_repetitive_region_filter_allowed_max_span_percent':FLAGS.microbe_repetitive_region_filter_allowed_max_span_percent,
+                               'microbe_repetitive_region_filter_min_average_depth':FLAGS.microbe_repetitive_region_filter_min_average_depth,
+                               'microbe_repetitive_region_filter_max_span_percent_overall':FLAGS.microbe_repetitive_region_filter_max_span_percent_overall,
                                'good_alignment_threshold':FLAGS.good_alignment_threshold,
                                'all_steps':FLAGS.all_steps,
 
@@ -4306,22 +4306,22 @@ def main():
     # spike_filter.O.noise_summary
 
 
-    # step 9: 'human_similar_filter': mark regions similar to human as noise region
+    # step 9: 'human_repetitive_region_filter': mark regions similar to human as noise region
 
-    human_similar_filter = IO_Container()
+    human_repetitive_region_filter = IO_Container()
 
-    human_similar_filter.I.assembly_list = assembly_selection.O.assembly_list
+    human_repetitive_region_filter.I.assembly_list = assembly_selection.O.assembly_list
     
-    if FLAGS.human_similar_filter == True:
-        step_human_similar_filter(nanopath, human_similar_filter)
+    if FLAGS.human_repetitive_region_filter == True:
+        step_human_repetitive_region_filter(nanopath, human_repetitive_region_filter)
     else:
-        human_similar_filter.O.noise_bed = BedTool('', from_string=True)
-        human_similar_filter.O.noise_stat = human_similar_filter.I.assembly_list[['assembly_id']].assign(human_span_bp = lambda x: 0, human_span_percent = lambda x: 0).copy()
+        human_repetitive_region_filter.O.noise_bed = BedTool('', from_string=True)
+        human_repetitive_region_filter.O.noise_stat = human_repetitive_region_filter.I.assembly_list[['assembly_id']].assign(human_span_bp = lambda x: 0, human_span_percent = lambda x: 0).copy()
 
     # Output
-    # human_similar_filter.O.noise_bed
-    # human_similar_filter.O.noise_stat          format: ['assembly_id', 'human_span_bp', 'human_span_percent']
-    # human_similar_filter.O.noise_summary
+    # human_repetitive_region_filter.O.noise_bed
+    # human_repetitive_region_filter.O.noise_stat          format: ['assembly_id', 'human_span_bp', 'human_span_percent']
+    # human_repetitive_region_filter.O.noise_summary
 
 
     # step 10: 'approx_abundance': remove noise and calculate abundance
@@ -4329,7 +4329,7 @@ def main():
     approx_abundance = IO_Container()
 
     approx_abundance.I.align_list = align_assembly_set.O.align_list
-    approx_abundance.I.noise_bed = merge_bed_with_assembly_id(bed_list=[spike_filter.O.noise_bed, human_similar_filter.O.noise_bed])
+    approx_abundance.I.noise_bed = merge_bed_with_assembly_id(bed_list=[spike_filter.O.noise_bed, human_repetitive_region_filter.O.noise_bed])
     approx_abundance.I.max_align_noise_overlap = nanopath.global_options['max_alignment_noise_overlap']
 
     step_approx_abundance(nanopath, approx_abundance)
@@ -4338,38 +4338,38 @@ def main():
     # approx_abundance.O.align_stat         format: align_stat_col_name
 
 
-    # step 11: 'microbe_similar_filter': align high abundant species to low abundant species and mark aligned regions as noise regions
+    # step 11: 'microbe_repetitive_region_filter': align high abundant species to low abundant species and mark aligned regions as noise regions
 
-    microbe_similar_filter = IO_Container()
+    microbe_repetitive_region_filter = IO_Container()
 
-    microbe_similar_filter.I.align_stat = approx_abundance.O.align_stat
-    microbe_similar_filter.I.assembly_list = assembly_selection.O.assembly_list
-    microbe_similar_filter.I.abundance_threshold_80 = nanopath.global_options['microbe_similar_filter_abundance_threshold_80']
-    microbe_similar_filter.I.abundance_threshold_90 = nanopath.global_options['microbe_similar_filter_abundance_threshold_90']
-    microbe_similar_filter.I.abundance_threshold_95 = nanopath.global_options['microbe_similar_filter_abundance_threshold_95']
-    microbe_similar_filter.I.abundance_threshold_98 = nanopath.global_options['microbe_similar_filter_abundance_threshold_98']
-    microbe_similar_filter.I.abundance_threshold_99 = nanopath.global_options['microbe_similar_filter_abundance_threshold_99']
-    microbe_similar_filter.I.abundance_threshold_99_2 = nanopath.global_options['microbe_similar_filter_abundance_threshold_99_2']
-    microbe_similar_filter.I.targeted_max_span_percent = nanopath.global_options['microbe_similar_filter_targeted_max_span_percent']
-    microbe_similar_filter.I.allowed_max_span_percent = nanopath.global_options['microbe_similar_filter_allowed_max_span_percent']
-    microbe_similar_filter.I.min_average_depth = nanopath.global_options['microbe_similar_filter_min_average_depth']
-    microbe_similar_filter.I.max_span_percent_overall = nanopath.global_options['microbe_similar_filter_max_span_percent_overall']
-    microbe_similar_filter.I.genus_height = nanopath.global_options['genus_height']
+    microbe_repetitive_region_filter.I.align_stat = approx_abundance.O.align_stat
+    microbe_repetitive_region_filter.I.assembly_list = assembly_selection.O.assembly_list
+    microbe_repetitive_region_filter.I.abundance_threshold_80 = nanopath.global_options['microbe_repetitive_region_filter_abundance_threshold_80']
+    microbe_repetitive_region_filter.I.abundance_threshold_90 = nanopath.global_options['microbe_repetitive_region_filter_abundance_threshold_90']
+    microbe_repetitive_region_filter.I.abundance_threshold_95 = nanopath.global_options['microbe_repetitive_region_filter_abundance_threshold_95']
+    microbe_repetitive_region_filter.I.abundance_threshold_98 = nanopath.global_options['microbe_repetitive_region_filter_abundance_threshold_98']
+    microbe_repetitive_region_filter.I.abundance_threshold_99 = nanopath.global_options['microbe_repetitive_region_filter_abundance_threshold_99']
+    microbe_repetitive_region_filter.I.abundance_threshold_99_2 = nanopath.global_options['microbe_repetitive_region_filter_abundance_threshold_99_2']
+    microbe_repetitive_region_filter.I.targeted_max_span_percent = nanopath.global_options['microbe_repetitive_region_filter_targeted_max_span_percent']
+    microbe_repetitive_region_filter.I.allowed_max_span_percent = nanopath.global_options['microbe_repetitive_region_filter_allowed_max_span_percent']
+    microbe_repetitive_region_filter.I.min_average_depth = nanopath.global_options['microbe_repetitive_region_filter_min_average_depth']
+    microbe_repetitive_region_filter.I.max_span_percent_overall = nanopath.global_options['microbe_repetitive_region_filter_max_span_percent_overall']
+    microbe_repetitive_region_filter.I.genus_height = nanopath.global_options['genus_height']
 
-    if FLAGS.microbe_similar_filter == True:
-        step_microbe_similar_filter(nanopath, microbe_similar_filter)
+    if FLAGS.microbe_repetitive_region_filter == True:
+        step_microbe_repetitive_region_filter(nanopath, microbe_repetitive_region_filter)
     else:
-        microbe_similar_filter.O.noise_bed = BedTool('', from_string=True)
-        microbe_similar_filter.O.noise_stat = assembly_selection.O.assembly_list[['assembly_id']].assign(microbe_span_bp = lambda x: 0, microbe_span_percent = lambda x: 0).copy()
-        microbe_similar_filter.O.source_target_noise_span_bp = pandas.DataFrame(columns=similar_noise_span_bp_col_name)
+        microbe_repetitive_region_filter.O.noise_bed = BedTool('', from_string=True)
+        microbe_repetitive_region_filter.O.noise_stat = assembly_selection.O.assembly_list[['assembly_id']].assign(microbe_span_bp = lambda x: 0, microbe_span_percent = lambda x: 0).copy()
+        microbe_repetitive_region_filter.O.source_target_noise_span_bp = pandas.DataFrame(columns=similar_noise_span_bp_col_name)
         for key, value in similar_noise_span_bp_col_type.items():
-            microbe_similar_filter.O.source_target_noise_span_bp[key] = microbe_similar_filter.O.source_target_noise_span_bp[key].astype(value)
+            microbe_repetitive_region_filter.O.source_target_noise_span_bp[key] = microbe_repetitive_region_filter.O.source_target_noise_span_bp[key].astype(value)
 
     # Output
-    # microbe_similar_filter.O.noise_bed
-    # microbe_similar_filter.O.noise_stat                    format: ['assembly_id', 'microbe_span_bp', 'microbe_span_percent']
-    # microbe_similar_filter.O.noise_summary
-    # microbe_similar_filter.O.source_target_noise_span_bp   format: similar_noise_span_bp_col_name
+    # microbe_repetitive_region_filter.O.noise_bed
+    # microbe_repetitive_region_filter.O.noise_stat                    format: ['assembly_id', 'microbe_span_bp', 'microbe_span_percent']
+    # microbe_repetitive_region_filter.O.noise_summary
+    # microbe_repetitive_region_filter.O.source_target_noise_span_bp   format: similar_noise_span_bp_col_name
 
 
     # step 12: 'noise_removal': remove alignments that have overlap with noise region over max_noise_overlap
@@ -4377,7 +4377,7 @@ def main():
     noise_removal = IO_Container()
 
     noise_removal.I.align_list = align_assembly_set.O.align_list
-    noise_removal.I.noise_bed = merge_bed_with_assembly_id(bed_list=[spike_filter.O.noise_bed, human_similar_filter.O.noise_bed, microbe_similar_filter.O.noise_bed])
+    noise_removal.I.noise_bed = merge_bed_with_assembly_id(bed_list=[spike_filter.O.noise_bed, human_repetitive_region_filter.O.noise_bed, microbe_repetitive_region_filter.O.noise_bed])
     noise_removal.I.max_align_noise_overlap = nanopath.global_options['max_alignment_noise_overlap']
     noise_removal.I.non_zero_approx_abundence_assembly_id = approx_abundance.O.align_stat.query('adjusted_average_depth > 0')[['assembly_id']].merge(
                                                                                                                                                      right=raw_stat.O.best_align_list[['assembly_id']].drop_duplicates().set_index(['assembly_id']),
@@ -4568,8 +4568,8 @@ def main():
 
     noise_detection_statistics.I.assembly_list = assembly_selection.O.assembly_list
     noise_detection_statistics.I.spike_noise_stat = spike_filter.O.noise_stat
-    noise_detection_statistics.I.human_noise_stat = human_similar_filter.O.noise_stat
-    noise_detection_statistics.I.microbe_noise_stat = microbe_similar_filter.O.noise_stat
+    noise_detection_statistics.I.human_noise_stat = human_repetitive_region_filter.O.noise_stat
+    noise_detection_statistics.I.microbe_noise_stat = microbe_repetitive_region_filter.O.noise_stat
     noise_detection_statistics.I.noise_bed = noise_removal.O.noise_bed
     noise_detection_statistics.I.closing_spike_noise_stat = closing_spike_filter.O.noise_stat
 
@@ -4591,8 +4591,8 @@ def main():
     noise_removal_statistics.I.assembly_list = assembly_selection.O.assembly_list
     noise_removal_statistics.I.best_align_list = raw_stat.O.best_align_list          # take the best_align_list before noise removal
     noise_removal_statistics.I.spike_noise_bed = spike_filter.O.noise_bed
-    noise_removal_statistics.I.human_noise_bed = human_similar_filter.O.noise_bed
-    noise_removal_statistics.I.microbe_noise_bed = microbe_similar_filter.O.noise_bed
+    noise_removal_statistics.I.human_noise_bed = human_repetitive_region_filter.O.noise_bed
+    noise_removal_statistics.I.microbe_noise_bed = microbe_repetitive_region_filter.O.noise_bed
     noise_removal_statistics.I.closing_spike_noise_bed = closing_spike_filter.O.closing_spike_noise_bed
     noise_removal_statistics.I.noise_bed = closing_spike_filter.O.noise_bed
     noise_removal_statistics.I.max_align_noise_overlap = nanopath.global_options['max_alignment_noise_overlap']
@@ -4738,14 +4738,14 @@ def main():
 
     nanopath.noise_bed = closing_spike_filter.O.noise_bed
     nanopath.spike_noise_bed = spike_filter.O.noise_bed
-    nanopath.human_similar_noise_bed = human_similar_filter.O.noise_bed
-    nanopath.microbe_similar_noise_bed = microbe_similar_filter.O.noise_bed
+    nanopath.human_repetitive_region_noise_bed = human_repetitive_region_filter.O.noise_bed
+    nanopath.microbe_repetitive_region_noise_bed = microbe_repetitive_region_filter.O.noise_bed
     nanopath.closing_spike_noise_bed = closing_spike_filter.O.closing_spike_noise_bed
 
     nanopath.noise_detection_stat = noise_detection_statistics.O.noise_stat                                 # format: noise_detection_stat_col_name_by_assembly_id
     nanopath.noise_removal_stat = noise_removal_statistics.O.noise_align_stat                               # format: noise_removal_stat_col_name_by_assembly_id
     nanopath.noise_source_stat = noise_source_statistics.O.noise_source_stat                                # format: noise_source_stat_col_name
-    nanopath.source_target_noise_span_bp = microbe_similar_filter.O.source_target_noise_span_bp             # format: similar_noise_span_bp_col_name
+    nanopath.source_target_noise_span_bp = microbe_repetitive_region_filter.O.source_target_noise_span_bp             # format: similar_noise_span_bp_col_name
 
 
     step_format_output(nanopath, FLAGS)
@@ -4807,13 +4807,13 @@ if __name__ == '__main__':
     group_closing_spike_filter.add_argument('--closing_spike_filter', dest='closing_spike_filter', action='store_true')
     group_closing_spike_filter.add_argument('--no-closing_spike_filter', dest='closing_spike_filter', action='store_false')
 
-    group_human_similar_filter = parser.add_mutually_exclusive_group(required=False)
-    group_human_similar_filter.add_argument('--human_similar_filter', dest='human_similar_filter', action='store_true')
-    group_human_similar_filter.add_argument('--no-human_similar_filter', dest='human_similar_filter', action='store_false')
+    group_human_repetitive_region_filter = parser.add_mutually_exclusive_group(required=False)
+    group_human_repetitive_region_filter.add_argument('--human_repetitive_region_filter', dest='human_repetitive_region_filter', action='store_true')
+    group_human_repetitive_region_filter.add_argument('--no-human_repetitive_region_filter', dest='human_repetitive_region_filter', action='store_false')
 
-    group_microbe_similar_filter = parser.add_mutually_exclusive_group(required=False)
-    group_microbe_similar_filter.add_argument('--microbe_similar_filter', dest='microbe_similar_filter', action='store_true')
-    group_microbe_similar_filter.add_argument('--no-microbe_similar_filter', dest='microbe_similar_filter', action='store_false')
+    group_microbe_repetitive_region_filter = parser.add_mutually_exclusive_group(required=False)
+    group_microbe_repetitive_region_filter.add_argument('--microbe_repetitive_region_filter', dest='microbe_repetitive_region_filter', action='store_true')
+    group_microbe_repetitive_region_filter.add_argument('--no-microbe_repetitive_region_filter', dest='microbe_repetitive_region_filter', action='store_false')
 
     group_short_alignment_filter = parser.add_mutually_exclusive_group(required=False)
     group_short_alignment_filter.add_argument('--short_alignment_filter', dest='short_alignment_filter', action='store_true')
@@ -4910,8 +4910,8 @@ if __name__ == '__main__':
     parser.set_defaults(decoy_filter=True)
     parser.set_defaults(variable_region_adjustment=False)
     parser.set_defaults(spike_filter=True)
-    parser.set_defaults(human_similar_filter=True)
-    parser.set_defaults(microbe_similar_filter=True)
+    parser.set_defaults(human_repetitive_region_filter=True)
+    parser.set_defaults(microbe_repetitive_region_filter=True)
     parser.set_defaults(closing_spike_filter=True)
     parser.set_defaults(short_alignment_filter=True)
     parser.set_defaults(unique_alignment=True)
@@ -4964,7 +4964,7 @@ if __name__ == '__main__':
     parser.add_argument('--adaptor_trimming_log', help='Log for stdout output from adaptor trimming program', default='adaptor_trimming.log')
     parser.add_argument('--python', help='Python entry point', default='python3')
 
-    parser.add_argument('--human_similar_filter_assembly_id', help='Assembly ID for human similar region filter', default='GCF_000001405.37')
+    parser.add_argument('--human_repetitive_region_filter_assembly_id', help='Assembly ID for human similar region filter', default='GCF_000001405.37')
 
     parser.add_argument('--max_aligner_thread', help='Maximum number of threads used by aligner', type=int, default=64)
     parser.add_argument('--max_qcat_thread', help='Maximum number of threads used by qcat', type=int, default=64)
@@ -5000,17 +5000,17 @@ if __name__ == '__main__':
     parser.add_argument('--expected_max_depth_stdev', help='Number of standard deviations for calculating expected max depth', type=int, default=6)
 
     # similar_region_filter
-    parser.add_argument('--microbe_similar_filter_abundance_threshold_80', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 80% similarity', type=float, default=160)
-    parser.add_argument('--microbe_similar_filter_abundance_threshold_90', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 90% similarity', type=float, default=80)
-    parser.add_argument('--microbe_similar_filter_abundance_threshold_95', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 95% similarity', type=float, default=40)
-    parser.add_argument('--microbe_similar_filter_abundance_threshold_98', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 98% similarity', type=float, default=16)
-    parser.add_argument('--microbe_similar_filter_abundance_threshold_99', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 99% similarity', type=float, default=8)
-    parser.add_argument('--microbe_similar_filter_abundance_threshold_99_2', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 99.2% similarity', type=float, default=6.4)
-    parser.add_argument('--microbe_similar_filter_targeted_max_span_percent', help='Maximum percent of regions (targeted) to be marked as similar region', type=int, default=90)
-    parser.add_argument('--microbe_similar_filter_allowed_max_span_percent', help='Maximum percent of regions (allowed) to be marked as similar region', type=int, default=97)
-    parser.add_argument('--microbe_similar_filter_min_average_depth', help='Minimum average depth to be considered as source of noise', type=float, default=0.2)
-    # microbe_similar_filter_max_span_percent_overall is not used currently
-    parser.add_argument('--microbe_similar_filter_max_span_percent_overall', help='Maximum percent of regions to be marked as similar region (overall)', type=int, default=97)
+    parser.add_argument('--microbe_repetitive_region_filter_abundance_threshold_80', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 80% similarity', type=float, default=160)
+    parser.add_argument('--microbe_repetitive_region_filter_abundance_threshold_90', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 90% similarity', type=float, default=80)
+    parser.add_argument('--microbe_repetitive_region_filter_abundance_threshold_95', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 95% similarity', type=float, default=40)
+    parser.add_argument('--microbe_repetitive_region_filter_abundance_threshold_98', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 98% similarity', type=float, default=16)
+    parser.add_argument('--microbe_repetitive_region_filter_abundance_threshold_99', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 99% similarity', type=float, default=8)
+    parser.add_argument('--microbe_repetitive_region_filter_abundance_threshold_99_2', help='Difference (no. of times) in apparent abundance to trigger similar region filter with 99.2% similarity', type=float, default=6.4)
+    parser.add_argument('--microbe_repetitive_region_filter_targeted_max_span_percent', help='Maximum percent of regions (targeted) to be marked as similar region', type=int, default=90)
+    parser.add_argument('--microbe_repetitive_region_filter_allowed_max_span_percent', help='Maximum percent of regions (allowed) to be marked as similar region', type=int, default=97)
+    parser.add_argument('--microbe_repetitive_region_filter_min_average_depth', help='Minimum average depth to be considered as source of noise', type=float, default=0.2)
+    # microbe_repetitive_region_filter_max_span_percent_overall is not used currently
+    parser.add_argument('--microbe_repetitive_region_filter_max_span_percent_overall', help='Maximum percent of regions to be marked as similar region (overall)', type=int, default=97)
 
     # noise_removal
     parser.add_argument('--max_alignment_noise_overlap', help='The maximum percent for an alignment to overlap with noise regions without being removed', type=int, default=50)
