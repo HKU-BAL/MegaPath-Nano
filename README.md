@@ -30,7 +30,7 @@ cd MegaPath-Nano
 ```
 
 ## Database Installation
-To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/. Without parsing any arguments to script, refseq and idnex will be downloaded and built to default locations.
+To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/. 
 ```
 # download RefSeq:
 ./refseq_download.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/]
