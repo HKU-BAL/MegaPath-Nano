@@ -31,19 +31,19 @@ cd MegaPath-Nano
 ## Database Installation
 To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
 ```
-# Download RefSeq:
+# download RefSeq:
 ./refseq_download.sh ${DB_DIR}
 
-# Download taxnomy to get names.dmp and nodes.dmp:
+# download taxnomy to get names.dmp and nodes.dmp:
 wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && tar xzf taxdump.tar.gz
 
-# Build assembly metadata:
+# build assembly metadata:
 ./updateAssemblyMetadata.sh ${DB_DIR} nodes.dmp ${ASSEMBLY_DIR}
 
-# Generate config files:
+# generate config files:
 ./updateConfigFile.sh ${DB_DIR} ${CONFIG_DIR}
 
-# Prepare SQL db data:
+# prepare SQL db data:
 ./updateDB.sh ${DB_DIR} ${SQL_DIR} names.dmp nodes.dmp
 # and then follows the sqlite script in updateDB.sh to import data to SQL tables.
 ```
