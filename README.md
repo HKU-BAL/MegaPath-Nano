@@ -60,22 +60,6 @@ Required Arguments:
         Query file (fastq or fasta)
 
 Optional Arguments:
-    --human
-        Human genome set in config folder, default human.genome_set.
-    --decoy
-        Decoy genome set in config folder, default plasmid.genome_set.
-    --species
-        Genome set for species identification in config folder, default species_id.genome_set.
-    --assembly
-        Genome set for assembly identification in config folder, default assembly_id.genome_set.
-    --taxonomy_db
-        Taxonomy database, default 'db/ncbi_taxonomy.db'.
-    --tool_folder
-        Tool folder, default 'tools/'.
-    --config_folder
-        Config folder, default 'config/'.
-    --assembly_folder
-        Assembly folder, default 'genomes/'.
     --aligner
         Path to aligner, default 'minimap2'.
     --max_aligner_thread INT
