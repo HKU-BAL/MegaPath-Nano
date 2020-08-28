@@ -18,11 +18,9 @@ conda config --add channels conda-forge
 conda create -n mpn python=3.6
 conda activate mpn
 
-# composition analysis module's dependencies
-conda install pandas==0.23 psutil pybedtools qcat bioconvert
+# Dependencies installation
+conda install pandas==0.23 psutil pybedtools qcat bioconvert minimap2 bcftools samtools cgecore pysam conda-forge tabulate
 
-# AMR detection module's dependencies
-conda install bcftools samtools cgecore pysam conda-forge tabulate
 ```
 
 ## Git clone MegaPath-Nano
@@ -63,7 +61,7 @@ Required Arguments:
 
 Optional Arguments:
     --aligner
-        Path to aligner, default 'minimap2'.
+        Path to aligner, default 'minimap2 within the PATH'.
     --max_aligner_thread INT
         Maximum number of threads used by aligner, default 64.
     --output_prefix
