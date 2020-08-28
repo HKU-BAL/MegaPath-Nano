@@ -10,7 +10,7 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 conda create -n mpn python=3.6
 conda activate mpn
 
-# prioritize channels
+#  prioritize channels
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
