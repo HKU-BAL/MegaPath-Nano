@@ -34,6 +34,8 @@ cd MegaPath-Nano
 ## Database Installation
 To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
 ```
+cd db_preparation
+
 # download RefSeq:
 ./refseq_download.sh ${DB_DIR}
 
