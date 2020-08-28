@@ -5,9 +5,7 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Prerequisites
 
-## Installation
-
-# git clone MegaPath-Nano
+## Git clone MegaPath-Nano
 ```
 git clone https://github.com/HKU-BAL/MegaPath-Nano
 cd MegaPath-Nano
