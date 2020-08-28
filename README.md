@@ -26,7 +26,7 @@ conda install bcftools samtools cgecore pysam conda-forge tabulate
 
 ## Git clone MegaPath-Nano
 ```
-git clone https://github.com/HKU-BAL/MegaPath-Nano
+git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano
 cd MegaPath-Nano
 ```
 
