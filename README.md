@@ -47,7 +47,7 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 ```
 ## Basic usage
 ```
-python megapath_nano.py --query ${FASTQ} [options]
+python MegaPath-Nano.py --query ${FASTQ} [options]
 
 Required Arguments:
     --query
