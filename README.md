@@ -10,16 +10,18 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 conda create -n mpn python=3.6
 conda activate mpn
 
-#  prioritize channels
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 
-#  Composition analysis module's dependencies
-conda install -y pandas==0.23 psutil pybedtools qcat bioconvert
+#  Composition analysis module dependencies
+conda install -c anaconda pandas==0.23 psutil
+conda install -c bioconda -y pybedtools qcat
+pip install bioconvert
 
-#  AMR detection module's dependencies
-conda install bcftools samtools cgecore pysam conda-forge tabulate
+#  AMR detection module dependencies
+conda install -c bioconda bcftools samtools cgecore pysam
+conda install -c conda-forge tabulate
 ```
 
 ## Git clone MegaPath-Nano
