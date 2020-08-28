@@ -5,6 +5,29 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Prerequisites
 
+## Conda Virtual Environment Setup
+```
+conda create -n mpn python=3.6
+conda activate mpn
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+#  composition analysis
+conda install -c anaconda pandas==0.23
+conda install -c anaconda -y psutil
+conda install -c bioconda -y pybedtools
+conda install -y qcat
+pip install bioconvert
+
+#  AMR detection module
+conda install -c bioconda bcftools
+conda install -c bioconda samtools
+conda install -c conda-forge tabulate
+conda install -c bioconda cgecore
+conda install -c bioconda pysam
+```
 ## Database Installation
 To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
 ```
