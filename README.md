@@ -5,12 +5,6 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Prerequisites
 
-## Git clone MegaPath-Nano
-```
-git clone https://github.com/HKU-BAL/MegaPath-Nano
-cd MegaPath-Nano
-```
-
 ## Conda Virtual Environment Setup
 ```
 conda create -n mpn python=3.6
@@ -30,6 +24,12 @@ pip install bioconvert
 #  AMR detection module dependencies
 conda install -c bioconda bcftools samtools cgecore pysam
 conda install -c conda-forge tabulate
+```
+
+## Git clone MegaPath-Nano
+```
+git clone https://github.com/HKU-BAL/MegaPath-Nano
+cd MegaPath-Nano
 ```
 
 ## Database Installation
