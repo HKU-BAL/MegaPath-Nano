@@ -7,7 +7,7 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Conda Virtual Environment Setup
 ```
-#  prioritize channels
+# prioritize channels
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
@@ -15,10 +15,10 @@ conda config --add channels conda-forge
 conda create -n mpn python=3.6
 conda activate mpn
 
-#  composition analysis module's dependencies
+# composition analysis module's dependencies
 conda install pandas==0.23 psutil pybedtools qcat bioconvert
 
-#  AMR detection module's dependencies
+# AMR detection module's dependencies
 conda install bcftools samtools cgecore pysam conda-forge tabulate
 ```
 
@@ -31,21 +31,21 @@ cd MegaPath-Nano
 ## Database Installation
 To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
 ```
-#Download RefSeq:
+# Download RefSeq:
 ./refseq_download.sh ${DB_DIR}
 
-#Download taxnomy to get names.dmp and nodes.dmp:
+# Download taxnomy to get names.dmp and nodes.dmp:
 wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && tar xzf taxdump.tar.gz
 
-#Build assembly metadata:
+# Build assembly metadata:
 ./updateAssemblyMetadata.sh ${DB_DIR} nodes.dmp ${ASSEMBLY_DIR}
 
-#Generate config files:
+# Generate config files:
 ./updateConfigFile.sh ${DB_DIR} ${CONFIG_DIR}
 
-#Prepare SQL db data:
+# Prepare SQL db data:
 ./updateDB.sh ${DB_DIR} ${SQL_DIR} names.dmp nodes.dmp
-#and then follows the sqlite script in updateDB.sh to import data to SQL tables.
+# and then follows the sqlite script in updateDB.sh to import data to SQL tables.
 ```
 ## Usage
 For all available options, please check [Usage.md](docs/Usage.md)
