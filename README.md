@@ -61,7 +61,7 @@ Required Arguments:
 
 Optional Arguments:
     --aligner
-        Path to aligner, default 'minimap2 within the PATH'.
+        Path to minimap2 aligner, default 'minimap2 within the PATH'.
     --max_aligner_thread INT
         Maximum number of threads used by aligner, default 64.
     --output_prefix
