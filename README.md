@@ -52,7 +52,7 @@ wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && tar xzf taxdump.t
 ```
 ## Basic usage
 ```
-python megapath_nano.py --query ${FASTQ}
+python megapath_nano.py --query ${FASTQ} [options]
 
 Required Arguments:
     --query
