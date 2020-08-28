@@ -30,24 +30,19 @@ cd MegaPath-Nano
 ```
 
 ## Database Installation
-To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/.
+To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/. Without parsing any arguments to script, refseq and idnex will be downloaded and built to default locations.
 ```
-cd db_preparation
-
 # download RefSeq:
-./refseq_download.sh ${DB_DIR}
-
-# download taxnomy to get names.dmp and nodes.dmp:
-wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && tar xzf taxdump.tar.gz
+./refseq_download.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/]
 
 # build assembly metadata:
-./updateAssemblyMetadata.sh ${DB_DIR} nodes.dmp ${ASSEMBLY_DIR}
+./updateAssemblyMetadata.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/] [${ASSEMBLY_DIR}=MegaPath-Nano/genomes/]
 
 # generate config files:
-./updateConfigFile.sh ${DB_DIR} ${CONFIG_DIR}
+./updateConfigFile.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/] [${CONFIG_DIR}=MegaPath-Nano/config/]
 
 # prepare SQL db data:
-./updateDB.sh ${DB_DIR} ${SQL_DIR} names.dmp nodes.dmp
+./updateDB.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/] [${SQL_DIR}=MegaPath-Nano/db/]
 # and then follows the sqlite script in updateDB.sh to import data to SQL tables.
 ```
 ## Basic usage

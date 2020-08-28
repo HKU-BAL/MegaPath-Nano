@@ -1,34 +1,50 @@
 #!/bin/bash
-if [[ $# -ne 4 ]]; then
-    echo "$0 db_dir sql_dir names.dmp nodes.dmp"
+SCRIPT=$(readlink -f $0)
+SCRIPT_PATH=$(dirname ${SCRIPT})
+ROOT_PATH=$(dirname $(dirname ${SCRIPT}))
+DB_DIR=${ROOT_PATH}/genomes/refseq/
+SQL_DB_DIR=${ROOT_PATH}/db/
+
+if [ $# -eq 2 ]
+then
+    DB_DIR=$1
+    SQL_DB_DIR=$2
+fi
+
+if [ ! -d ${DB_DIR} ]; then
+    echo "DB not exist. Please use refseq_download.sh to download RefSeq DB first."
     exit
 fi
 
-if [ ! -d ${2} ]
-then
-    mkdir -p ${2}
+if [ ! -d ${SQL_DB_DIR} ]; then
+    mkdir -p ${SQL_DB_DIR}
 fi
-cd ${2}
+
+cd ${SQL_DB_DIR}
+
+wget ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz && tar xzf taxdump.tar.gz && rm citations.dmp delnodes.dmp division.dmp gencode.dmp merged.dmp readme.txt
 
 #sequence_name table
-python genSequenceName.py --function 1 --sequenceName abhvfp.sequence_name --db_dir ${1}
-python genSequenceName.py --function 2 --sequenceName plasmid.sequence_name --db_dir ${1} --num 8
-cat abhvfp.sequence_name plasmid.sequence_name > sequence_name.csv
+python ${SCRIPT_PATH}/genSequenceName.py --function 1 --sequenceName abhvfp.sequence_name --db_dir ${DB_DIR}
+python ${SCRIPT_PATH}/genSequenceName.py --function 2 --sequenceName plasmid.sequence_name --db_dir ${DB_DIR} --num 8
+cat abhvfp.sequence_name plasmid.sequence_name > sequence_name.csv && rm abhvfp.sequence_name plasmid.sequence_name
 
 #assembly_summary table
-python genAssemblySummary.py --db_dir ${1} --assemblySummary assembly_summary
+python ${SCRIPT_PATH}/genAssemblySummary.py --db_dir ${DB_DIR} --assemblySummary assembly_summary
 
 #ranks
-python genRank.py --ranks ranks.csv
+python ${SCRIPT_PATH}/genRank.py --ranks ranks.csv
 
 #names and nodes
-python parseDml.py --dmp ${3} --outputFile abhvfp.names --function 1
-python parseDml.py ----outputFile plasmid.names --function 3 --num 8 
-cat abhvfp.names plasmid.names > names.csv
+python ${SCRIPT_PATH}/parseDml.py --dmp names.dmp --outputFile abhvfp.names --function 1
+python ${SCRIPT_PATH}/parseDml.py ----outputFile plasmid.names --function 3 --num 8 
+cat abhvfp.names plasmid.names > names.csv && rm abhvfp.names plasmid.names
 
-python parseDml.py --dmp ${4} --outputFile abhvfp.nodes --function 2
-python parseDml.py ----outputFile plasmid.nodes --function 4 --num 8
-cat abhvfp.nodes plasmid.nodes > nodes.csv
+python ${SCRIPT_PATH}/parseDml.py --dmp nodes.dmp --outputFile abhvfp.nodes --function 2
+python ${SCRIPT_PATH}/parseDml.py ----outputFile plasmid.nodes --function 4 --num 8
+cat abhvfp.nodes plasmid.nodes > nodes.csv && rm abhvfp.nodes plasmid.nodes
+
+cp ${SCRIPT_PATH}/source.csv source.csv
 
 #source.csv table is provided
 

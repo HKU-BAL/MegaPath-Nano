@@ -9,7 +9,75 @@ import gzip
 from Bio import SeqIO
 
 FLAGS = None
+class Assembly:
+    #assemblyAccession, refseqCategory, taxid, speciesTaxid, assemblyLevel, organismName
+    def __init__(self, assemblyAccession, refseqCategory, taxid, speciesTaxid, assemblyLevel, organismName):
+        self.assemblyAccession = assemblyAccession
+        self.refseqCategory = refseqCategory
+        self.taxid = taxid
+        self.speciesTaxid = speciesTaxid
+        self.assemblyLevel = assemblyLevel
+        self.organismName = organismName
 
+    def __str__(self):
+        return "%s\t%s\t%s\t%s"%(self.assemblyAccession, self.speciesTaxid, self.taxid, self.organismName)
+
+def getValidAssemble(assemblySummary):
+    assembly_summary = pandas.read_csv(assemblySummary, dtype=str, sep='\t', header=1)
+    prevSpeciesTaxid = None
+    assemblyDict = {}
+    referenceFound = False
+    representativeFound = False
+    targetAssembly = []
+    with open(assemblySummary, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                continue
+            eles = line.strip().split('\t')
+            speciesTaxid = eles[6]
+            if prevSpeciesTaxid is None:
+                prevSpeciesTaxid = speciesTaxid
+            if prevSpeciesTaxid != speciesTaxid:
+                for assemblyKey in assemblyDict:
+                    assemblyInfo = assemblyDict[assemblyKey]
+                    if assemblyInfo.refseqCategory == 'reference genome':
+                        targetAssembly.append(assemblyKey)
+                    elif assemblyInfo.refseqCategory == 'representative genome':
+                        if referenceFound:
+                            if assemblyInfo.assemblyLevel == 'Scaffold' or assemblyInfo.assemblyLevel == 'Contig':
+                                continue
+                            targetAssembly.append(assemblyKey)
+                    elif assemblyInfo.refseqCategory == 'na':
+                        if referenceFound or representativeFound:
+                            if assemblyInfo.assemblyLevel == 'Scaffold' or assemblyInfo.assemblyLevel == 'Contig':
+                                continue
+                            targetAssembly.append(assemblyKey)
+                assemblyDict.clear()
+                referenceFound = False
+                representativeFound = False
+                prevSpeciesTaxid = speciesTaxid
+            assemblyInfo = Assembly(eles[0], eles[4], eles[5], eles[6], eles[11], eles[7])
+            if eles[4] == 'reference genome':
+                referenceFound = True
+            elif eles[4] == 'representative genome':
+                representativeFound = True
+            assemblyDict[eles[0]] = assemblyInfo
+    if prevSpeciesTaxid != speciesTaxid:
+        for assemblyKey in assemblyDict:
+            assemblyInfo = assemblyDict[assemblyKey]
+            if assemblyInfo.refseqCategory == 'reference genome':
+                targetAssembly.append(assemblyKey)
+            elif assemblyInfo.refseqCategory == 'representative genome':
+               	if referenceFound:
+                    if assemblyInfo.assemblyLevel == 'Scaffold' or assemblyInfo.assemblyLevel == 'Contig':
+                        continue
+                    targetAssembly.append(assemblyKey)
+            elif assemblyInfo.refseqCategory == 'na':
+                if referenceFound or representativeFound:
+                    if assemblyInfo.assemblyLevel == 'Scaffold' or assemblyInfo.assemblyLevel == 'Contig':
+                        continue
+                    targetAssembly.append(assemblyKey)
+    return targetAssembly
 
 def download(genome, db_dir):
     genome_dir = os.path.join(db_dir, genome)
@@ -33,10 +101,13 @@ def download(genome, db_dir):
 
     assembly_summary = pandas.read_csv('%s/assembly_summary.txt'%(genome_dir), dtype=str, sep='\t',
                                        header=1)
+    targetAssembly = getValidAssemble(assemblySummary)
 
     for i in range(assembly_summary.shape[0]):
 
     	if FLAGS.numBatch == 0 or i % FLAGS.numBatch == FLAGS.batch:
+            if assembly_summary['# assembly_accession'][i] not in assembly_summary:
+                continue
 
             prefix = assembly_summary['ftp_path'][i][assembly_summary['ftp_path'][i].find(assembly_summary['# assembly_accession'][i]):]
             
