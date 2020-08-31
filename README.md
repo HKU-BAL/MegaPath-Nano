@@ -19,7 +19,8 @@ conda create -n mpn python=3.6
 conda activate mpn
 
 # installing all dependencies for both modules
-conda install pandas==0.23 psutil pybedtools qcat bioconvert minimap2 bcftools samtools cgecore pysam conda-forge tabulate pandarallel
+conda install pandas==0.23 psutil pybedtools qcat bioconvert minimap2 bcftools samtools cgecore pysam conda-forge tabulate 
+pip install pandarallel
 
 ```
 
