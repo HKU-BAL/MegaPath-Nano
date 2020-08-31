@@ -28,7 +28,7 @@ Environment config:
     --assembly_folder
         Assembly folder, default 'genomes/'.
     --aligner
-        Path to aligner, default 'minima2'.
+        Path to minimap2 aligner, default 'minimap2 within the PATH'.
     --read_simulator
         Path to read simulation program, default 'tools/nanosim/simulator.py'.
     --read_simulation_profiles
