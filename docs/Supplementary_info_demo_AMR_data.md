@@ -3,7 +3,7 @@
 Demo data for AMR detection of five patient isolates are available at:  
 http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/.  
 
-Samples were prepared using ONT Rapid Sequencing Kit,and sequenced using ONT R9.4.1 flowcells. The results of antimicrobial susceptibility testing for each sample are listed in the followings:
+Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9.4.1 flowcells. The results of antimicrobial susceptibility testing for each sample are listed in the followings:
 
 | Drug**  | Sample 1 | Sample 2 | Sample 3 | Sample 4 | Sample 5 |  
 | :---         |     :---:      |     :---:      |     :---:      |     :---:      |     :---:      |
