@@ -80,8 +80,6 @@ For all available options, please check [Usage.md](docs/Usage.md)
 
 ## Demo data
 
-Demo data for AMR detection of five patient isolates are available at:  
-http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/  
-Samples were prepared using ONT Rapid Sequencing Kit,and sequenced using ONT R9.4.1 flowcells.  
+The demo data for AMR detection of five patient isolates are available for download on http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/. Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9.4.1 flowcells.
   
 The experimental validation results of these AMR demo datasets are listed on [Supplementary_info_AMR](docs/Supplementary_info_demo_AMR_data.md).
