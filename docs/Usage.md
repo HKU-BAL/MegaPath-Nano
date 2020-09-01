@@ -1,4 +1,4 @@
-### Options
+### Options for taxonomic classification module:
 ```
 General options:
     --query
