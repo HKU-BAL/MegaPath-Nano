@@ -78,6 +78,7 @@ For all available options, please check [Usage.md](docs/Usage.md)
 (1) Run taxonomic analysis module only
 
 (2) Run AMR deteciton module only
+
 python MegaPath-Nano_AMR.py inputbam outputdir [options]
 
 Optional Arguments:
