@@ -78,6 +78,13 @@ For all available options, please check [Usage.md](docs/Usage.md)
 (1) Run taxonomic analysis module only
 
 (2) Run AMR deteciton module only
+python MegaPath-Nano_AMR.py inputbam outputdir [options]
+
+Optional Arguments:
+  --taxon TAXON         taxon-specific options for AMRFinder
+  --threads THREADS     max num of threads
+  --REFSEQ_PATH REFSEQ_PATH
+                        the path of RefSeq
 
 (3) To included user-specific reference sequences into the decoy database
 ```
