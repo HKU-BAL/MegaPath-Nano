@@ -59,20 +59,14 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 python MegaPath-Nano_taxon.py --query ${fq/fa} [options]
 
 required arguments:
-    --query
-        Query file (fastq or fasta)
+  --query
+      query file (fastq or fasta)
 
 optional arguments:
-    --aligner
-        Path to minimap2 aligner, default 'minimap2 within the PATH'.
-    --max_aligner_thread INT
-        Maximum number of threads used by aligner, default 64.
-    --output_prefix
-        Output Prefix, query file name will be used for output prefix by default.
-    --output_folder
-        Output folder, default ./.
-    -h, --help
-        Show help message and exit
+  --aligner                     Path to minimap2 aligner, default 'minimap2 within the PATH'.
+  --max_aligner_thread INT      Maximum number of threads used by aligner, default 64.
+  --output_prefix               Output Prefix, query file name will be used for output prefix by default.
+  --output_folder               Output folder, default ./.
 ```
 For all available options, please check [Usage.md](docs/Usage.md)
 
@@ -89,7 +83,6 @@ required arguments:
 optional arguments:
   --taxon TAXON         taxon-specific options for AMRFinder [e.g. --taxon Escherichia], see usage for the full list of curated organisms
   --threads THREADS     max num of threads
-  -h, --help            Show help message and exit
 ```
 
 ## Demo data
