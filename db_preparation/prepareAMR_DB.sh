@@ -2,7 +2,7 @@ SCRIPT=$(readlink -f $0)
 SCRIPT_PATH=$(dirname ${SCRIPT})
 ROOT_PATH=$(dirname $(dirname ${SCRIPT}))
 
-cd $ROOT_PATH
+cd ${ROOT_PATH}/bin
 #TODO update to 4.0
 git clone -b 3.2.1 https://git@bitbucket.org/genomicepidemiology/resfinder.git
 
