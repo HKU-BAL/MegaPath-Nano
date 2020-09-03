@@ -56,7 +56,7 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 
 (1) Run taxonomic analysis module only
 ```
-python MegaPath-Nano.py --query ${fq/fa} [options]
+python MegaPath-Nano_taxon.py --query ${fq/fa} [options]
 
 required arguments:
     --query
