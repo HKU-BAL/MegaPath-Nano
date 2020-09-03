@@ -52,13 +52,13 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 ```
 ## Basic usage
 ```
-python MegaPath-Nano.py --query ${FASTQ} [options]
+python MegaPath-Nano.py --query ${fq/fa} [options]
 
-Required Arguments:
+required arguments:
     --query
         Query file (fastq or fasta)
 
-Optional Arguments:
+optional arguments:
     --aligner
         Path to minimap2 aligner, default 'minimap2 within the PATH'.
     --max_aligner_thread INT
@@ -79,13 +79,17 @@ For all available options, please check [Usage.md](docs/Usage.md)
 
 (2) Run AMR deteciton module only
 
-python MegaPath-Nano_AMR.py inputbam outputdir [options]
+python MegaPath-Nano_AMR.py --query_bam $(bam) --output_folder $(dir) [options]
 
-Optional Arguments:
+required arguments:
+  --query_bam QUERY_BAM
+                        input bam
+  --output_folder OUTPUT_FOLDER
+                        output directory
+
+optional arguments:
   --taxon TAXON         taxon-specific options for AMRFinder
   --threads THREADS     max num of threads
-  --REFSEQ_PATH REFSEQ_PATH
-                        the path of RefSeq
 
 (3) To included user-specific reference sequences into the decoy database
 ```
