@@ -51,7 +51,10 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 ./prepareAMR_DB.sh
 
 ```
+
 ## Basic usage
+
+(1) Run taxonomic analysis module only
 ```
 python MegaPath-Nano.py --query ${fq/fa} [options]
 
@@ -73,14 +76,9 @@ optional arguments:
 ```
 For all available options, please check [Usage.md](docs/Usage.md)
 
-
-## Advanced usage
-```
-(1) Run taxonomic analysis module only
-
 (2) Run AMR deteciton module only
-
-python MegaPath-Nano_AMR.py --query_bam $(bam) --output_folder $(dir) [options]
+```
+python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
 
 required arguments:
   --query_bam QUERY_BAM
@@ -89,10 +87,9 @@ required arguments:
                         output directory
 
 optional arguments:
-  --taxon TAXON         taxon-specific options for AMRFinder
+  --taxon TAXON         taxon-specific options for AMRFinder [e.g. --taxon Escherichia], see usage for the full list of curated organisms
   --threads THREADS     max num of threads
-
-(3) To included user-specific reference sequences into the decoy database
+  -h, --help            Show help message and exit
 ```
 
 ## Demo data
