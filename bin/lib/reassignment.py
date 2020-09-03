@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import argparse
 import pandas as pd
 import sys
 import os
@@ -30,7 +31,7 @@ def Count(groupby_count,species_i):
 def MCount(species_i,species_j,mcount_set_list):
     return Counter(mcount_set_list)[frozenset({species_i,species_j})]
 
-def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict):
+def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ERROR_RATE,RATIO):
     #print(i_explains_j_dict.values())
     #if species_i in i_explains_j_dict.values():
     #    pass
@@ -45,11 +46,9 @@ def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignm
         else:
             i_explains_j_dict[species_i]={species_j}
 
-def iterate_reassign(align_list):
+def iterate_reassign(align_list,i_explains_j_dict):
     def is_in_explain_other(x):
         return True if x in i_explains_j_dict.keys() else False
-
-    align_list['is_in_explain_other'] = align_list['name'].parallel_apply(is_in_explain_other)
 
     def second_index(x):
         read_id = x['read_id']
@@ -74,6 +73,8 @@ def iterate_reassign(align_list):
             align_list.loc[search_pair.index,['name','sequence_id']]=[name,name+"_RA"]
             align_list.loc[search_pair.index].to_csv('alignlist_update.csv',mode='a',header=None)
 
+    align_list['is_in_explain_other'] = align_list['name'].parallel_apply(is_in_explain_other)
+
     uk = align_list[align_list['is_in_explain_other']]
     #  sort by ranking order of name
     species_ranking_list=uk['name'].value_counts().keys().tolist()
@@ -82,7 +83,7 @@ def iterate_reassign(align_list):
     uk[['read_id','name','alignment_score','sequence_id']].parallel_apply( second_index ,axis=1)
     return align_list
 
-def Reassign(align_list,iteration_n=1,ERROR_RATE=0.05,RATIO=0.05,maximumNumberOfThreads=96,REASSIGNMENT_AS_THRESHOLD=0):
+def Reassign(align_list,iteration_n=1,ERROR_RATE=0.05,RATIO=0.05,threads=96,REASSIGNMENT_AS_THRESHOLD=0):
     #TODO iterate groupby and explainlist
     #TODO generate
     TAXON_FILE="/mnt/bal13/wwlui/Nanopath_TB/db_new_refseq.sequence_name.first_two_words"
@@ -107,44 +108,57 @@ def Reassign(align_list,iteration_n=1,ERROR_RATE=0.05,RATIO=0.05,maximumNumberOf
     mcount_set_list=[]
     mcount_read_id_list=read_id_groupby.size()[read_id_groupby.size()>1].index
 
-    with ThreadPoolExecutor(maximumNumberOfThreads) as exec:
+    with ThreadPoolExecutor(threads) as exec:
         for read_id in mcount_read_id_list:
             species_name_list=read_id_groupby.get_group(read_id)['name'].tolist()
             exec.submit(build_mcount_set_list, species_name_list,mcount_set_list)
     Counter_mcount_set_list=Counter(mcount_set_list)
     i_explains_j_dict={}
-    with ThreadPoolExecutor(maximumNumberOfThreads) as exec:
+    with ThreadPoolExecutor(threads) as exec:
         for species_i in species_list:
             for species_j in species_list:
                 #print(i_explains_j_dict.values())
                 if species_i==species_j or species_i in i_explains_j_dict.values():
                 #if species_i==species_j :
                     continue
-                exec.submit(build_i_explains_j_dict, species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict)
+                exec.submit(build_i_explains_j_dict, species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ERROR_RATE,RATIO)
+    
+    if i_explains_j_dict==False:
+        return raw_align_list
+
     with open('i_explains_j_dict', 'w') as file:
-        file.write(json.dumps(i_explains_j_dict))
+        file.write(str(i_explains_j_dict))
 
     pandarallel.initialize()
 
-
-
     for i in range(iteration_n):
-        align_list=iterate_reassign(align_list)
+        align_list=iterate_reassign(align_list,i_explains_j_dict)
         #should be no need to update align_list
         update=pd.read_csv('alignlist_update.csv',names=['read_id', 'read_length', 'read_from', 'read_to', 'strand', 'sequence_id', 'sequence_length', 'sequence_from', 'sequence_to','match','alignment_block_length', 'mapq', 'edit_dist', 'alignment_score','assembly_id', 'tax_id', 'species_tax_id', 'genus_tax_id', 'alignment_score_tiebreaker','name','is_in_explain_other'])
         raw_align_list.update(update[~update.index.duplicated(keep='first')])
         os.remove('alignlist_update.csv')
         print('iteration:',i)
 
-
     raw_align_list=raw_align_list.astype({'read_id': str, 'read_length': int, 'read_from': int, 'read_to': int, 'strand': str, 'sequence_id': str, 'sequence_length': int, 'sequence_from' : int, 'sequence_to': int,'match': int, 'mapq': int, 'edit_dist': int, 'alignment_score': int,'assembly_id': str, 'tax_id': int, 'species_tax_id': int, 'genus_tax_id': int, 'alignment_score_tiebreaker': float,'alignment_block_length': int,'name': str})
     raw_align_list.to_csv('updated.csv')
+    return align_list
 
 
 if __name__ == '__main__': 
-    REASSIGNMENT_AS_THRESHOLD=float(sys.argv[1])
-    align_list=pd.read_csv(sys.argv[2], index_col =0)
-    Reassign(align_list,RATIO,ERROR_RATE,maximumNumberOfThreads,REASSIGNMENT_AS_THRESHOLD)
+    parser = argparse.ArgumentParser(description='MegaPath-Nano: Reassignment')
+    parser.add_argument('--align_list', required=True,help='Input align list')
+    parser.add_argument('--AS_threshold', default=0.0, help='Percentage of AS required for an alignment to be reassigned to another species from the original species')
+    parser.add_argument('--ratio', default=0.05, help='Ratio of dissimilarity between species')
+    parser.add_argument('--error_rate', default=0.05, help='Allowed error rate')
+    parser.add_argument('--threads', default=48, help='Max num of threads')
+    results = parser.parse_args()
+    align_list_path=results.align_list
+    REASSIGNMENT_AS_THRESHOLD=results.AS_threshold
+    RATIO=results.ratio
+    ERROR_RATE=results.error_rate
+    threads=results.threads
+    align_list=pd.read_csv(align_list_path, index_col =0)
+    Reassign(align_list=align_list,RATIO=RATIO,ERROR_RATE=ERROR_RATE,threads=threads,REASSIGNMENT_AS_THRESHOLD=REASSIGNMENT_AS_THRESHOLD)
 
 
 
