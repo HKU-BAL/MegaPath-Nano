@@ -361,12 +361,12 @@ def mergeResults(dir_arr):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MegaPath-Nano: AMR Detection') 
-    parser.add_argument('--query_bam', required=True,help='input bam')
-    parser.add_argument('--output_folder', required=True,help='output directory')
-    parser.add_argument('--taxon', help='taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
-    parser.add_argument('--threads', default='48', help='max num of threads')
+    parser.add_argument('--query_bam', required=True,help='Input bam')
+    parser.add_argument('--output_folder', required=True,help='Output directory')
+    parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
+    parser.add_argument('--threads', default='48', help='Max num of threads')
     #TODO
-    parser.add_argument('--REFSEQ_PATH', default='refseq.fna.gz', help='the path of RefSeq')
+    parser.add_argument('--REFSEQ_PATH', default='refseq.fna.gz', help='The path of RefSeq')
     results = parser.parse_args()
     inputfile = results.query_bam
     outputfile = results.output_folder
