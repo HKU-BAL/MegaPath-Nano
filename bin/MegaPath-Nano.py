@@ -1224,7 +1224,7 @@ def step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter):
 
     for file_index, filename in enumerate(human_and_decoy_filter.I.query_filename_list['path']):
         output_file = os.open(human_and_decoy_filter.O.query_filename_list['path'][file_index], flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode=0o644)
-        filter_command = [os.path.join(megapath_nano.global_options['tool_folder'], 'seqtk'),]
+        filter_command = ['seqtk',]
         filter_command.extend(('subseq', filename, read_id_to_keep_filename))
         filter_process = subprocess.Popen(filter_command, close_fds=True, stdout=output_file)
         filter_process_list.append(filter_process)
@@ -1632,7 +1632,7 @@ def step_variable_region(megapath_nano, variable_region):
 
                 temp_align_list_file = os.open(temp_align_list_filename, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode=0o644)
 
-                aligner_command = [os.path.join(megapath_nano.global_options['tool_folder'], megapath_nano.global_options['aligner']),]
+                aligner_command = [megapath_nano.global_options['aligner'],]
                 aligner_command.extend(shlex.split(similarity_option(divergence=variable_region_divergence) + ' -N 1000 -p 0 -c'))
                 aligner_command.extend(shlex.split(megapath_nano.global_options['alignerThreadOption']))
                 if os.path.exists(temp_index_filename) == False:
@@ -2103,7 +2103,7 @@ def step_microbe_repetitive_region_filter(megapath_nano, microbe_repetitive_regi
 
                     temp_align_list_file = os.open(temp_align_list_filename, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode=0o644)
 
-                    aligner_command = [os.path.join(megapath_nano.global_options['tool_folder'], megapath_nano.global_options['aligner']),]
+                    aligner_command = [megapath_nano.global_options['aligner'],]
                     aligner_command.extend(aligner_option)
                     aligner_command.extend(shlex.split(megapath_nano.global_options['alignerThreadOption']))
                     if os.path.exists(assembly_path.iloc[low_abundance_index]['index_path']) == False:
@@ -3989,7 +3989,7 @@ def main():
     else:
         pybedtools.KEEP_TEMPFILES=True
 
-    pybedtools.helpers.set_bedtools_path(os.path.join(megapath_nano.global_options['tool_folder'], 'bedtools'))
+    #pybedtools.helpers.set_bedtools_path(os.path.join(megapath_nano.global_options['tool_folder'], 'bedtools'))
     pybedtools.helpers.set_tempdir(megapath_nano.RAM_dir_name)
     if FLAGS.debug == True:
         pybedtools.debug_mode(True)
