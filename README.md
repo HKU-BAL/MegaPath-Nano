@@ -78,7 +78,7 @@ For all available options, please check [Usage.md](docs/Usage.md)
 
 (2) Run AMR deteciton module only
 ```
-python MegaPath-Nano_AMR.py --query_bam $(bam) --output_folder $(dir) [options]
+python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
 
 required arguments:
   --query_bam QUERY_BAM
