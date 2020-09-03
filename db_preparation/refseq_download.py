@@ -2,7 +2,7 @@ from __future__ import print_function, division
 
 import argparse
 import pandas
-from os import listdir, path, system
+import os
 import sys
 import subprocess
 import gzip
@@ -22,14 +22,13 @@ class Assembly:
     def __str__(self):
         return "%s\t%s\t%s\t%s"%(self.assemblyAccession, self.speciesTaxid, self.taxid, self.organismName)
 
-def getValidAssemble(assemblySummary):
-    assembly_summary = pandas.read_csv(assemblySummary, dtype=str, sep='\t', header=1)
+def getValidAssemble(assembly_summary,assemblySummary_path):
     prevSpeciesTaxid = None
     assemblyDict = {}
     referenceFound = False
     representativeFound = False
     targetAssembly = []
-    with open(assemblySummary, 'r') as f:
+    with open(assemblySummary_path, 'r') as f:
         for line in f:
             if line.startswith('#'):
                 continue
@@ -81,8 +80,8 @@ def getValidAssemble(assemblySummary):
 
 def download(genome, db_dir):
     genome_dir = os.path.join(db_dir, genome)
-    if path.exists(genome_dir) != True:
-        status = system('mkdir -p %s'%(genome_dir))
+    if os.path.exists(genome_dir) != True:
+        status = os.system('mkdir -p %s'%(genome_dir))
         if status != 0:
             sys.exit()
 
@@ -90,18 +89,18 @@ def download(genome, db_dir):
         if FLAGS.get_summary == True:
             print('Download assembly_summary', flush=True)
             if genome == "vertebrate_mammalian":
-                status = system(
+                status = os.system(
                     'wget -a wget.log -N -P %s ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/%s/Homo_sapiens/assembly_summary.txt'%(genome_dir, genome))
             else:
-                status = system(
+                status = os.system(
                     'wget -a wget.log -N -P %s ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/%s/assembly_summary.txt'%(genome_dir, genome))
             if status != 0:
                 print("assembly_summary failed", flush=True)
                 sys.exit()
 
-    assembly_summary = pandas.read_csv('%s/assembly_summary.txt'%(genome_dir), dtype=str, sep='\t',
-                                       header=1)
-    targetAssembly = getValidAssemble(assemblySummary)
+    assembly_summary = pandas.read_csv('%s/assembly_summary.txt'%(genome_dir), dtype=str, sep='\t',header=1)
+    assemblySummary_path = '%s/assembly_summary.txt'%(genome_dir)
+    targetAssembly = getValidAssemble(assembly_summary,assemblySummary_path)
 
     for i in range(assembly_summary.shape[0]):
 
@@ -113,26 +112,26 @@ def download(genome, db_dir):
             
             print('   ', genome, i + 1, 'of', assembly_summary.shape[0], ': ', assembly_summary['# assembly_accession'][i], end='', flush=True)
             assembly_path=os.path.join(genome_dir, assembly_summary['# assembly_accession'][i])
-            if path.exists(assembly_path) != True:
-                status = system('mkdir %s'%(assembly_path))
+            if os.path.exists(assembly_path) != True:
+                status = os.system('mkdir %s'%(assembly_path))
                 if status != 0:
                     print("mkdir failed", flush=True)
                     sys.exit()
 
-            if path.exists(os.path.join(assembly_path, "%s_assembly_report.txt"%(prefix))) != True:
-                status = system("wget -a wget.log -N -P " + assembly_path  + " " +
+            if os.path.exists(os.path.join(assembly_path, "%s_assembly_report.txt"%(prefix))) != True:
+                status = os.system("wget -a wget.log -N -P " + assembly_path  + " " +
                                 assembly_summary['ftp_path'][i] + "/" + prefix + "_assembly_report.txt")
                 if status != 0:
                     print("assembly_report failed", end='', flush=True)
             
-            if path.exists(os.path.join(assembly_path, "%s_genomic.fna.gz"%(prefix))) != True:
-                status = system("wget -a wget.log -N -P " + assembly_path + " " +
+            if os.path.exists(os.path.join(assembly_path, "%s_genomic.fna.gz"%(prefix))) != True:
+                status = os.system("wget -a wget.log -N -P " + assembly_path + " " +
                                 assembly_summary['ftp_path'][i] + "/" + prefix + "_genomic.fna.gz")
                 if status != 0:
                     print("fasta failed", end='', flush=True)
 
-            if path.exists(os.path.join(assembly_path, "md5checksums.txt")) != True:
-                status = system("wget -a wget.log -N -P " + assembly_path + " " +
+            if os.path.exists(os.path.join(assembly_path, "md5checksums.txt")) != True:
+                status = os.system("wget -a wget.log -N -P " + assembly_path + " " +
                                 assembly_summary['ftp_path'][i] + "/md5checksums.txt")
                 if status != 0:
                     print("checksum failed", end='', flush=True)
@@ -141,8 +140,8 @@ def download(genome, db_dir):
 
 def downloadPlasmid(genome, num, db_dir):
     genome_dir = os.path.join(db_dir, genome)
-    if path.exists(genome_dir) != True:
-        status = system('mkdir -p %s'%(genome_dir))
+    if os.path.exists(genome_dir) != True:
+        status = os.system('mkdir -p %s'%(genome_dir))
         if status != 0:
             sys.exit()
 
@@ -154,17 +153,17 @@ def downloadPlasmid(genome, num, db_dir):
 
     for i in range(1, num+1):
         assembly_path = os.path.join(genome_dir, "PLA_00000000%d.1"%(i))
-        if path.exists(assembly_path) != True:
-            status = system('mkdir -p %s'%(assembly_path))
+        if os.path.exists(assembly_path) != True:
+            status = os.system('mkdir -p %s'%(assembly_path))
             if status != 0:
                 print("mkdir failed", flush=True)
                 sys.exit()
 
-        if path.exists(os.path.join(assembly_path, 'plasmid.%d.1.genomic.fna.gz'%(i))) != True:
-            status = system("wget -a wget.log -N -P " + assembly_path + "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/plasmid/plasmid.%d.1.genomic.fna.gz"%(i))
+        if os.path.exists(os.path.join(assembly_path, 'plasmid.%d.1.genomic.fna.gz'%(i))) != True:
+            status = os.system("wget -a wget.log -N -P " + assembly_path + " ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/plasmid/plasmid.%d.1.genomic.fna.gz"%(i))
             if status != 0:
                 print("fasta failed", end='', flush=True)
-            status = system("mv %s %s"%(os.path.join(assembly_path, 'plasmid.%d.1.genomic.fna.gz'%(i)), os.path.join(assembly_path, 'plasmid.%d.1.genomic.original.fna.gz'%(i))))
+            status = os.system("mv %s %s"%(os.path.join(assembly_path, 'plasmid.%d.1.genomic.fna.gz'%(i)), os.path.join(assembly_path, 'plasmid.%d.1.genomic.original.fna.gz'%(i))))
             if status != 0:
                 print("rename fasta failed", end='', flush=True)
             
