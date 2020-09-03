@@ -363,7 +363,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='MegaPath-Nano: AMR Detection') 
     parser.add_argument('--query_bam', required=True,help='input bam')
     parser.add_argument('--output_folder', required=True,help='output directory')
-    parser.add_argument('--taxon', help='taxon-specific options for AMRFinder: Possible organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
+    parser.add_argument('--taxon', help='taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
     parser.add_argument('--threads', default='48', help='max num of threads')
     #TODO
     parser.add_argument('--REFSEQ_PATH', default='refseq.fna.gz', help='the path of RefSeq')
