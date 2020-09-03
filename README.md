@@ -60,7 +60,7 @@ python MegaPath-Nano_taxon.py --query ${fq/fa} [options]
 
 required arguments:
   --query
-                              query file (fastq or fasta)
+                              Query file (fastq or fasta)
 
 optional arguments:
   --aligner                   Path to minimap2 aligner, default 'minimap2 within the PATH'.
@@ -76,13 +76,13 @@ python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
 
 required arguments:
   --query_bam QUERY_BAM
-                        input bam
+                              Input bam
   --output_folder OUTPUT_FOLDER
-                        output directory
+                              Output directory
 
 optional arguments:
-  --taxon TAXON         taxon-specific options for AMRFinder [e.g. --taxon Escherichia], see usage for the full list of curated organisms
-  --threads THREADS     max num of threads
+  --taxon TAXON               Taxon-specific options for AMRFinder [e.g. --taxon Escherichia], see usage for the full list of curated organisms
+  --threads THREADS           Max num of threads
 ```
 
 ## Demo data
