@@ -89,6 +89,7 @@ required arguments:
 optional arguments:
   --taxon TAXON         taxon-specific options for AMRFinder [e.g. --taxon e_coli]
   --threads THREADS     max num of threads
+  -h, --help            Show help message and exit
 ```
 
 ## Demo data
