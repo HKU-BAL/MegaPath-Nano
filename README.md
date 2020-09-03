@@ -87,7 +87,7 @@ required arguments:
                         output directory
 
 optional arguments:
-  --taxon TAXON         taxon-specific options for AMRFinder
+  --taxon TAXON         taxon-specific options with a list of available taxa for AMRFinder [e.g. --taxon e_coli]
   --threads THREADS     max num of threads
 ```
 
