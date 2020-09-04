@@ -101,12 +101,10 @@ def download(genome, db_dir):
     assembly_summary = pandas.read_csv('%s/assembly_summary.txt'%(genome_dir), dtype=str, sep='\t',header=1)
     assemblySummary_path = '%s/assembly_summary.txt'%(genome_dir)
     targetAssembly = getValidAssemble(assembly_summary,assemblySummary_path)
-
+    
     for i in range(assembly_summary.shape[0]):
 
     	if FLAGS.numBatch == 0 or i % FLAGS.numBatch == FLAGS.batch:
-            if assembly_summary['# assembly_accession'][i] not in assembly_summary:
-                continue
 
             prefix = assembly_summary['ftp_path'][i][assembly_summary['ftp_path'][i].find(assembly_summary['# assembly_accession'][i]):]
             
