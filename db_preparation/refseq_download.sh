@@ -12,10 +12,11 @@ if [ ! -d ${DB_DIR} ]; then
     mkdir -p ${DB_DIR}
 fi
 
-python3 refseq_download.py --bacteria --get_summary --db_dir ${DB_DIR}
-python3 refseq_download.py --fungi --get_summary --db_dir ${DB_DIR}
-python3 refseq_download.py --protozoa --get_summary --db_dir ${DB_DIR}
-python3 refseq_download.py --viral --get_summary --db_dir ${DB_DIR}
-python3 refseq_download.py --archaea --get_summary --db_dir ${DB_DIR}
-python3 refseq_download.py --vertebrate_mammalian --get_summary --db_dir ${DB_DIR}
-python3 refseq_download.py --plasmid --num 8 --db_dir ${DB_DIR} #8 = number of plasmid file can be downloaded on ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/plasmid/
+nohup python3 refseq_download.py --bacteria --get_summary --db_dir ${DB_DIR} > nohup.bacteria_refseq_download &
+nohup python3 refseq_download.py --fungi --get_summary --db_dir ${DB_DIR} > nohup.fungi_refseq_download &
+nohup python3 refseq_download.py --protozoa --get_summary --db_dir ${DB_DIR} > nohup.protozoa_refseq_download &
+nohup python3 refseq_download.py --viral --get_summary --db_dir ${DB_DIR} > nohup.viral_refseq_download &
+nohup python3 refseq_download.py --archaea --get_summary --db_dir ${DB_DIR} > nohup.archaea_refseq_download &
+nohup python3 refseq_download.py --vertebrate_mammalian --get_summary > nohup.vertebrate_mammalian_refseq_download &
+#8 = number of plasmid file can be downloaded on ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/plasmid/--db_dir ${DB_DIR}
+nohup python3 refseq_download.py --plasmid --num 8 --db_dir ${DB_DIR} > nohup.plasmid_refseq_download & 
