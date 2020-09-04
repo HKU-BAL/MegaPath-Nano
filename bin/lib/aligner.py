@@ -101,56 +101,40 @@ def Align(*,
           target_assembly_list=None, 
           aligner_options=None,
           paf_path_and_prefix=None,
-          mapping_only=False,
-          align_all_refseq=False):
+          mapping_only=False,):
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
 
-    if align_all_refseq==False:
+    num_target_specification = 0
+    if target_filename_list is not None and target_filename_list['path'].shape[0] > 0:
+        num_target_specification += 1
+    if target_assembly_list is not None and target_assembly_list['assembly_id'].shape[0] > 0:
+        num_target_specification += 1
 
-        num_target_specification = 0
-        if target_filename_list is not None and target_filename_list['path'].shape[0] > 0:
-            num_target_specification += 1
-        if target_assembly_list is not None and target_assembly_list['assembly_id'].shape[0] > 0:
-            num_target_specification += 1
+    if num_target_specification != 1:
+        os.sys.exit('Exactly one of target_filename_list and target_assembly_list must be specified')
 
-        if num_target_specification != 1:
-            os.sys.exit('Exactly one of target_filename_list and target_assembly_list must be specified')
+    if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
+        target_filename_list = assembly_metadata.get_assembly_path(assembly_list=target_assembly_list)
+        if target_filename_list is None or target_filename_list.shape[0] != target_assembly_list['assembly_id'].shape[0]:
+            os.sys.exit('Target assembly_id not found')
+        target_filename_list['path'] = target_filename_list['path'].map(lambda x: os.path.join(global_options['assembly_folder'], x))
+    
+    if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
+        target_assembly_length = assembly_metadata.get_assembly_length(assembly_list=target_assembly_list)
+        if target_assembly_length is None or target_assembly_length.shape[0] != target_assembly_list.shape[0]:
+            os.sys.exit('Target assembly_length not found')
+    else:
+        target_assembly_length = target_filename_list.assign(assembly_length = lambda x: 1)
+    
+    
+    
+    num_target = target_filename_list.shape[0]
+    if target_assembly_length.shape[0] != num_target:
+        os.sys.exit('Number of target_assembly_length does not match number of target_filename_list') 
 
-        if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
-            target_filename_list = assembly_metadata.get_assembly_path(assembly_list=target_assembly_list)
-            if target_filename_list is None or target_filename_list.shape[0] != target_assembly_list['assembly_id'].shape[0]:
-                os.sys.exit('Target assembly_id not found')
-            target_filename_list['path'] = target_filename_list['path'].map(lambda x: os.path.join(global_options['assembly_folder'], x))
-        
-        
-
-        
-        """
-        for target in (target_filename_list['path']):
-            if os.path.isfile(target) == False:
-                os.sys.exit('Target file ' + target + ' not exists')
-                
-        """
-        
-
-
-        
-        if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
-            target_assembly_length = assembly_metadata.get_assembly_length(assembly_list=target_assembly_list)
-            if target_assembly_length is None or target_assembly_length.shape[0] != target_assembly_list.shape[0]:
-                os.sys.exit('Target assembly_length not found')
-        else:
-            target_assembly_length = target_filename_list.assign(assembly_length = lambda x: 1)
-        
-        
-        
-        num_target = target_filename_list.shape[0]
-        if target_assembly_length.shape[0] != num_target:
-            os.sys.exit('Number of target_assembly_length does not match number of target_filename_list') 
-
-        
-        temp_pipe_target_fasta_name = os.path.join(local_temp_dir_name, 'temp_pipe_target_fasta')
-        os.mkfifo(temp_pipe_target_fasta_name)
+    
+    temp_pipe_target_fasta_name = os.path.join(local_temp_dir_name, 'temp_pipe_target_fasta')
+    os.mkfifo(temp_pipe_target_fasta_name)
 
     num_query_specification = 0
     if query_filename_list is not None and query_filename_list['path'].shape[0] > 0:
@@ -183,24 +167,16 @@ def Align(*,
     for key, value in align_list_col_type_no_assembly_id.items():
         align_list[key] = align_list[key].astype(value)
 
-
-
-
-
     if paf_path_and_prefix is None or paf_path_and_prefix == '':
         output_PAF = False
     else:
         output_PAF = True
     
-    
-
-
     if output_PAF == True:
         paf_filename = paf_path_and_prefix + '.paf'
         sam_filename = paf_path_and_prefix + '.sam'
         sam_file = os.open(sam_filename, flags=os.O_CREAT |  os.O_WRONLY|os.O_TRUNC, mode=0o644)
 
-    
     #  align query to target (input from named pipe)
     aligner_command = [os.path.join(global_options['tool_folder'], global_options['aligner']),]
     if mapping_only == False:
@@ -211,53 +187,28 @@ def Align(*,
         #aligner_command.extend(['--split-prefix','tmp'])
     aligner_command.extend(aligner_options)
 
-    if align_all_refseq==False:    
-        aligner_command.append(temp_pipe_target_fasta_name)
-        aligner_command.extend(query_filename_list['path'])
-        if output_PAF == True:
-            aligner_stdout=sam_file
-        else:
-            aligner_stdout=subprocess.PIPE
-        
-        aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
-        
-        
-        
-        #  cat target to pipe
-        temp_pipe_target_fasta = os.open(temp_pipe_target_fasta_name, flags=os.O_WRONLY)
-        
-        #chunk
-        chunk_size=1000
-        for i in range(0,len(target_filename_list['path']),chunk_size):
-            cat_command = ['cat',]
-            cat_command.extend(target_filename_list['path'][i:i+chunk_size].tolist())
-            cat_process = subprocess.Popen(cat_command, close_fds=True, stdout=temp_pipe_target_fasta)
-            cat_process.wait()
-        #cat_command = ['cat',]
-        #cat_command.extend(target_filename_list['path'])
-        #print(target_filename_list['path'])
-        #cat_process = subprocess.Popen(cat_command, close_fds=True, stdout=temp_pipe_target_fasta)
-
-    elif align_all_refseq==True:
-        aligner_command.append('/mnt/bal13/wwlui/nano_minimap/refseq.fna.map-ont.I500.mmi')
-        aligner_command.extend(query_filename_list['path'])
-        if output_PAF == True:
-            aligner_stdout=sam_file
-        else:
-            aligner_stdout=subprocess.PIPE
-        
-        aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
-
-    
-    
-    
+    aligner_command.append(temp_pipe_target_fasta_name)
+    aligner_command.extend(query_filename_list['path'])
     if output_PAF == True:
-        if align_all_refseq==False:
-            cat_process.wait()
-            os.close(temp_pipe_target_fasta)
-        
+        aligner_stdout=sam_file
+    else:
+        aligner_stdout=subprocess.PIPE
+    
+    aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
+    
+    #  cat target to pipe
+    temp_pipe_target_fasta = os.open(temp_pipe_target_fasta_name, flags=os.O_WRONLY)
+    
+    #chunk
+    chunk_size=1000
+    for i in range(0,len(target_filename_list['path']),chunk_size):
+        cat_command = ['cat',]
+        cat_command.extend(target_filename_list['path'][i:i+chunk_size].tolist())
+        cat_process = subprocess.Popen(cat_command, close_fds=True, stdout=temp_pipe_target_fasta)
+        cat_process.wait()
+
+    if output_PAF == True:
         aligner_process.wait()
-        
         convert=SAM2PAF(sam_filename,paf_filename)
         convert(pri_only=False)
         #samtools view -F2308 -b barcode09_10-8.species.sam|samtools sort -o barcode09_10-8.species.bam 2>/dev/null;samtools index barcode09_10-8.species.bam
@@ -266,25 +217,8 @@ def Align(*,
         samtools_bin=os.path.join(global_options['tool_folder'], 'samtools')
         sort_and_index_bam_command = '{samtools} view -F2308 -b {sam}|{samtools} sort -o {bam};{samtools} index {bam}'.format(samtools=samtools_bin,sam=sam_filename,bam=bam_filename)
         sort_and_index_bam_process = subprocess.Popen(sort_and_index_bam_command, shell=True, stderr=subprocess.DEVNULL)
-        
-        
         awk_stdin= os.open(paf_filename, flags=os.O_RDONLY)
-    """
-    if output_PAF == True:
-        # tee output to paf file
-
-        tee_command = ['tee',]
-        tee_command.append(sam_filename)
-
-        tee_process = subprocess.Popen(tee_command, close_fds=True, stdin=aligner_process.stdout, stdout=subprocess.PIPE)
-
-        awk_stdin = tee_process.stdout
-
-    else:
-        awk_stdin = aligner_process.stdout
-    """
-    
-    if output_PAF == False:
+    elif output_PAF == False:
         awk_stdin = aligner_process.stdout
 
     # step 3: retain the required columns only (connect from step 2 through stdout-stdin)
@@ -306,6 +240,7 @@ def Align(*,
     
     awk_process.wait()
     os.close(aligner_output)
+
     if output_PAF == True:
         os.close(sam_file)
 
