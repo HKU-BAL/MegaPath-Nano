@@ -3993,7 +3993,7 @@ def main():
         pybedtools.debug_mode(True)
 
 
-    num_core = psutil.cpu_count(logical=False)
+    num_core = psutil.cpu_count(logical=True)
     ram_available = psutil.virtual_memory().available
     megapath_nano.global_options['max_target_GBase_per_batch'] = ram_available // 1024 // 1024 // 1024 // 8 
 

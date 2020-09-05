@@ -4,28 +4,29 @@ import pysam
 from concurrent.futures import ThreadPoolExecutor
 import argparse 
 
-def processTaxID(bam_path,taxon,threads,REFSEQ_PATH):
+FLAGS=None
+def processTaxID(bam_path):
     """
     """
     try:
         acc_id_list = subprocess.check_output(
-            "samtools view -@ {threads} {bam}|cut -f3|sort|uniq".format(threads=threads,bam=bam_path) ,encoding='utf-8',
+            "samtools view -@ {threads} {bam}|cut -f3|sort|uniq".format(threads=FLAGS.threads,bam=bam_path) ,encoding='utf-8',
             shell=True).strip().split("\n")
     except subprocess.CalledProcessError:
         print("No accession ID is mapped with the taxonomy ID.")
         exit()
-    with pysam.FastxFile(REFSEQ_PATH) as fin:
+    with pysam.FastxFile(FLAGS.REFSEQ_PATH) as fin:
         for entry in fin:
             if str(entry.name) in acc_id_list:
                 with open( "ref_{acc_id}.fa".format(acc_id=entry.name), mode='a') as fout, open("ref_{acc_id}.bed".format(acc_id=entry.name), mode='a') as bed_out:
                     fout.write(str(entry)+'\n')
                     bed_out.write("{name}\t0\t{end}\n".format(name=entry.name,end=len(entry.sequence)))
-    with ThreadPoolExecutor(int(threads)) as executor:
+    with ThreadPoolExecutor(int(FLAGS.threads)) as executor:
         for acc_id in acc_id_list:
-            executor.submit(processAccessionNo,acc_id,taxon,threads)
+            executor.submit(processAccessionNo,acc_id)
     pass
 
-def processAccessionNo(acc_id,taxon,threads):
+def processAccessionNo(acc_id):
     """
     """
     curr_time = time.asctime(time.localtime(time.time()))
@@ -33,10 +34,10 @@ def processAccessionNo(acc_id,taxon,threads):
     
     os.system("cp header.sam sample_{acc_id}.sam".format(acc_id=acc_id))
     os.system("samtools view sample.sorted.bam | awk '$3 ~ /{acc_id}/' >> sample_{acc_id}.sam".format(acc_id=acc_id))
-    os.system("samtools view -@ {threads} -b sample_{acc_id}.sam > sample_{acc_id}.bam".format(threads=threads,acc_id=acc_id))
+    os.system("samtools view -@ {threads} -b sample_{acc_id}.sam > sample_{acc_id}.bam".format(threads=FLAGS.threads,acc_id=acc_id))
     os.system("bedtools bamtobed -i  sample_{acc_id}.bam |bedops -m - > sample_{acc_id}.merged.bed".format(acc_id=acc_id))
     os.system("bedops -d ref_{acc_id}.bed sample_{acc_id}.merged.bed > sample_{acc_id}.0cov.bed".format(acc_id=acc_id))
-    os.system("bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv --threads {threads} -o calls_{acc_id}.vcf.gz".format(acc_id=acc_id,threads=threads))
+    os.system("bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv --threads {threads} -o calls_{acc_id}.vcf.gz".format(acc_id=acc_id,threads=FLAGS.threads))
     os.system("tabix calls_{acc_id}.vcf.gz".format(acc_id=acc_id))
     os.system("cat ref_{acc_id}.fa | bcftools consensus -m sample_{acc_id}.0cov.bed calls_{acc_id}.vcf.gz > cns_{acc_id}.fa".format(acc_id=acc_id))
     os.makedirs("results/{acc_id}".format(acc_id=acc_id), exist_ok=True)
@@ -52,15 +53,15 @@ def processAccessionNo(acc_id,taxon,threads):
              "awk -F'\\t' -vOFS=, '{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {} else { print a[i]\"\\t\"$2\"\\t\"$3} ;}'  results/{acc_id}/resfinder/resf_temp2.txt >  results/{acc_id}/resfinder/resf.txt".format(acc_id=acc_id), shell=True)
 
     os.makedirs("results/{acc_id}/card".format(acc_id=acc_id), exist_ok=True)
-    c_subprocess = subprocess.Popen("rgi main --input_sequence cns_{acc_id}.fa --output_file results/{acc_id}/card/results --input_type contig -n {threads}".format(acc_id=acc_id,threads=threads) + ' && ' + \
+    c_subprocess = subprocess.Popen("rgi main --input_sequence cns_{acc_id}.fa --output_file results/{acc_id}/card/results --input_type contig -n {threads}".format(acc_id=acc_id,threads=FLAGS.threads) + ' && ' + \
         "awk -F'\t' 'NR>1{print $15 \"|\" $9 \"|\" $10}' results/{acc_id}/card/results.txt > results/{acc_id}/card/card_temp.txt".format(acc_id=acc_id)  + ' && ' + \
         "awk -F'|' -vOFS=, '{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){print a[i]\"|\"$2\"|\"$3} else {split(a[i],b,\" \"); print b[1]\"|\"$2\"|\"$3} ;}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt".format(acc_id=acc_id), shell=True)
 
 
     os.makedirs("results/{acc_id}/amrfinder".format(acc_id=acc_id), exist_ok=True )
     add_flag=''
-    if taxon != '':
-        add_flag='-O '+taxon
+    if FLAGS.taxon != '':
+        add_flag='-O '+FLAGS.taxon
     a_subprocess = subprocess.Popen("amrfinder {add_flag} -n cns_{acc_id}.fa > results/{acc_id}/amrfinder/results.txt".format(acc_id=acc_id,add_flag=add_flag)+ ' && ' + \
                 "awk -F'\\t' 'NR>1{print $12 \"\\t\" $6 \"\\t\" $17}' results/{acc_id}/amrfinder/results.txt > results/{acc_id}/amrfinder/amrf_temp.txt".format(acc_id=acc_id)+ ' && ' + \
                 "awk -F'\\t' -vOFS=, '{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){print a[i]\"\\t\"$2\"\\t\"$3} else {split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3} ;}' results/{acc_id}/amrfinder/amrf_temp.txt > results/{acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id), shell=True)
@@ -367,18 +368,13 @@ if __name__ == "__main__":
     parser.add_argument('--threads', default='48', help='Max num of threads')
     #TODO
     parser.add_argument('--REFSEQ_PATH', default='refseq.fna.gz', help='The path of RefSeq')
-    results = parser.parse_args()
-    inputfile = results.query_bam
-    outputfile = results.output_folder
-    taxon = results.taxon
-    threads=results.threads
-    REFSEQ_PATy=results.REFSEQ_PATH
+    FLAGS = parser.parse_args()
 
     dir_arr = os.listdir(os.getcwd())
-    if not (outputfile in dir_arr):
-        os.makedirs(outputfile)
-    bam_path = os.path.abspath(inputfile)
-    os.chdir(outputfile)
+    if not (FLAGS.output_folder in dir_arr):
+        os.makedirs(FLAGS.output_folder)
+    bam_path = os.path.abspath(FLAGS.query_bam)
+    os.chdir(FLAGS.output_folder)
     print("current directory: " + os.getcwd())
 
     if not os.path.exists("sample.sorted.bam") or not os.path.exists("sample.sorted.bam.bai") or not os.path.exists("header.sam") :
@@ -387,7 +383,7 @@ if __name__ == "__main__":
         p = subprocess.Popen("samtools index sample.sorted.bam", shell=True)
 
         # make the header for the sam file which will be used for each accession no
-        s = subprocess.Popen("samtools view -@ {threads} -H sample.sorted.bam > header.sam".format(threads=threads), shell=True)
+        s = subprocess.Popen("samtools view -@ {threads} -H sample.sorted.bam > header.sam".format(threads=FLAGS.threads), shell=True)
 
         # make sure the original bam is sorted and indexed and header template is ready
         p.communicate()
@@ -402,7 +398,7 @@ if __name__ == "__main__":
     os.system("rgi clean")
     os.system("rgi load --card_json card/card.json")
 
-    processTaxID(bam_path,taxon,threads,REFSEQ_PATH)
+    processTaxID(bam_path,FLAGS.REFSEQ_PATH)
 
     print("All results have been generated")
     os.chdir("results")

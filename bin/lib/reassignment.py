@@ -31,7 +31,7 @@ def Count(groupby_count,species_i):
 def MCount(species_i,species_j,mcount_set_list):
     return Counter(mcount_set_list)[frozenset({species_i,species_j})]
 
-def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ERROR_RATE,RATIO):
+def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ratio,error_rate):
     #print(i_explains_j_dict.values())
     #if species_i in i_explains_j_dict.values():
     #    pass
@@ -40,17 +40,17 @@ def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignm
     UCount_i=Count(unique_alignment_name_groupby_count,species_i)
     UCount_j=Count(unique_alignment_name_groupby_count,species_j)
     MCount_i_j=Counter_mcount_set_list[frozenset({species_i,species_j})]
-    if AllCount_i+MCount_i_j>=RATIO*AllCount_i and UCount_j<ERROR_RATE*UCount_i:
+    if AllCount_i+MCount_i_j>=ratio*AllCount_i and UCount_j<error_rate*UCount_i:
         if species_i in i_explains_j_dict:
             i_explains_j_dict[species_i].add(species_j)
         else:
             i_explains_j_dict[species_i]={species_j}
 
-def iterate_reassign(align_list,i_explains_j_dict):
+def iterate_reassign(align_list,i_explains_j_dict,AS_threshold):
     def is_in_explain_other(x):
         return True if x in i_explains_j_dict.keys() else False
 
-    def second_index(x):
+    def second_index(x,AS_threshold):
         read_id = x['read_id']
         name = x['name']
         first_alignment_score = x['alignment_score']
@@ -64,10 +64,10 @@ def iterate_reassign(align_list,i_explains_j_dict):
         if not search_pair.empty:
             search_pair['first_alignment_score'] = first_alignment_score
 
-            def first_AS_passed(x):
-                return True if x['alignment_score'] * REASSIGNMENT_AS_THRESHOLD <= x['first_alignment_score'] else False
+            def first_AS_passed(x,AS_threshold):
+                return True if x['alignment_score'] * AS_threshold <= x['first_alignment_score'] else False
 
-            search_pair['first_AS_passed'] = search_pair[['alignment_score','first_alignment_score']].apply(first_AS_passed,axis=1)
+            search_pair['first_AS_passed'] = search_pair[['alignment_score','first_alignment_score']].apply(first_AS_passed,args=(AS_threshold),axis=1)
             search_pair=search_pair[search_pair["first_AS_passed"]]
 
             align_list.loc[search_pair.index,['name','sequence_id']]=[name,name+"_RA"]
@@ -80,10 +80,11 @@ def iterate_reassign(align_list,i_explains_j_dict):
     species_ranking_list=uk['name'].value_counts().keys().tolist()
     uk['name']=pd.Categorical(uk['name'],categories=species_ranking_list,ordered=True)
     uk=uk.sort_values(ascending=True,by=['name'])
-    uk[['read_id','name','alignment_score','sequence_id']].parallel_apply( second_index ,axis=1)
+    uk[['read_id','name','alignment_score','sequence_id']].parallel_apply( second_index ,args=(AS_threshold),axis=1)
     return align_list
 
-def Reassign(align_list,iteration_n=1,ERROR_RATE=0.05,RATIO=0.05,threads=96,REASSIGNMENT_AS_THRESHOLD=0):
+FLAGS=None
+def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_threshold=0):
     #TODO iterate groupby and explainlist
     #TODO generate
     TAXON_FILE="/mnt/bal13/wwlui/Nanopath_TB/db_new_refseq.sequence_name.first_two_words"
@@ -121,7 +122,7 @@ def Reassign(align_list,iteration_n=1,ERROR_RATE=0.05,RATIO=0.05,threads=96,REAS
                 if species_i==species_j or species_i in i_explains_j_dict.values():
                 #if species_i==species_j :
                     continue
-                exec.submit(build_i_explains_j_dict, species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ERROR_RATE,RATIO)
+                exec.submit(build_i_explains_j_dict, species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ratio,error_rate)
     
     if i_explains_j_dict==False:
         return raw_align_list
@@ -131,8 +132,8 @@ def Reassign(align_list,iteration_n=1,ERROR_RATE=0.05,RATIO=0.05,threads=96,REAS
 
     pandarallel.initialize()
 
-    for i in range(iteration_n):
-        align_list=iterate_reassign(align_list,i_explains_j_dict)
+    for i in range(iteration):
+        align_list=iterate_reassign(align_list,i_explains_j_dict,AS_threshold)
         #should be no need to update align_list
         update=pd.read_csv('alignlist_update.csv',names=['read_id', 'read_length', 'read_from', 'read_to', 'strand', 'sequence_id', 'sequence_length', 'sequence_from', 'sequence_to','match','alignment_block_length', 'mapq', 'edit_dist', 'alignment_score','assembly_id', 'tax_id', 'species_tax_id', 'genus_tax_id', 'alignment_score_tiebreaker','name','is_in_explain_other'])
         raw_align_list.update(update[~update.index.duplicated(keep='first')])
@@ -151,14 +152,10 @@ if __name__ == '__main__':
     parser.add_argument('--ratio', default=0.05, help='Ratio of dissimilarity between species')
     parser.add_argument('--error_rate', default=0.05, help='Allowed error rate')
     parser.add_argument('--threads', default=48, help='Max num of threads')
-    results = parser.parse_args()
-    align_list_path=results.align_list
-    REASSIGNMENT_AS_THRESHOLD=results.AS_threshold
-    RATIO=results.ratio
-    ERROR_RATE=results.error_rate
-    threads=results.threads
-    align_list=pd.read_csv(align_list_path, index_col =0)
-    Reassign(align_list=align_list,RATIO=RATIO,ERROR_RATE=ERROR_RATE,threads=threads,REASSIGNMENT_AS_THRESHOLD=REASSIGNMENT_AS_THRESHOLD)
+    parser.add_argument('--iteration', default=1, help='Num of iterations')
+    FLAGS = parser.parse_args()
+    align_list=pd.read_csv(FLAGS.align_list, index_col =0)
+    Reassign(align_list,iteration=FLAGS.iteration,error_rate=FLAGS.error_rate,ratio=FLAGS.ratio,threads=FLAGS.threads,AS_threshold=FLAGS.AS_threshold)
 
 
 
