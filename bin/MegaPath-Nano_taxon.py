@@ -4159,7 +4159,7 @@ def main():
     
     
     
-    # step 3: 'placement_to_species': align filtered reads to initial genome set; species with number of reads best aligned to it >= threshold will be included
+    # step 3: 'placement_to_species': align filtered reads to all genome sets; species with number of reads best aligned to it >= threshold will be included
 
     placement_to_species = IO_Container()
 
@@ -4951,7 +4951,7 @@ if __name__ == '__main__':
     parser.add_argument('--RAM_folder', help='temporary folder in RAM', default='/run/shm')
     parser.add_argument('--taxonomy_db', help='taxonomy database', default=nano_dir+'/db/ncbi_taxonomy.db')
     parser.add_argument('--tool_folder', help='Tool folder', default=cwd+'/tools')
-    parser.add_argument('--config_folder', help='Config file folder', default=cwd+'/config')
+    parser.add_argument('--config_folder', help='Config file folder', default=nano_dir+'/config')
     parser.add_argument('--assembly_folder', help='Assembly folder', default=nano_dir+'/genomes')
     parser.add_argument('--aligner', help='Aligner program', default='minimap2')
     parser.add_argument('--read_simulator', help='Read simulation program', default=cwd+'/tools/nanosim/simulator.py')

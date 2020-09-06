@@ -175,12 +175,12 @@ def downloadPlasmid(genome, num, db_dir):
 
             path=os.path.join(assembly_path, 'plasmid.%d.1.genomic.original.fna.gz'%(i))
             outputPath = os.path.join(assembly_path, 'plasmid.%d.1.genomic.fna.gz'%(i))
-            fileWriter = open(outputPath, 'w')
+            fileWriter = gzip.open(outputPath, 'wb')
             with gzip.open(path, 'rt') as f:
                 for record in SeqIO.parse(f, 'fasta'):
                     description = ' '.join(record.description.split(' ')[1:])
                     record.id = record.id+"_PLA"
-                    fileWriter.write(">%s %s\n%s\n"%(record.id, description, record.seq))
+                    fileWriter.write(b">%s %s\n%s\n"%(record.id.encode(), description.encode(), record.seq.encode()))
 
             fileWriter.close()
 
@@ -225,6 +225,6 @@ if __name__ == '__main__':
     parser.add_argument('--db_dir', default='./')
     parser.add_argument('--threads', default=psutil.cpu_count(logical=True))
 
-    FLAGS = parser.parse_args()
+    FLAGS, UNPARSED = parser.parse_known_args()
 
     main()

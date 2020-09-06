@@ -1,5 +1,5 @@
 import argparse
-from os import listdir, path, system
+import os
 import sys
 import pandas
 import gzip
@@ -20,9 +20,12 @@ def summary(db_dir, sequenceName):
             assemblyAccession = assembly_summary['# assembly_accession'][i]
             prefix = assembly_summary['ftp_path'][i][assembly_summary['ftp_path'][i].find(assemblyAccession):]
             path = '%s/%s/%s/%s_genomic.fna.gz'%(db_dir, genome, assemblyAccession, prefix)
-            with gzip.open(path, 'rt') as f:
-                for record in SeqIO.parse(f, 'fasta'):
-                    sequenceNameWriter.write("%s\t%s\n"%(record.id, ' '.join(record.description.split(' ')[1:])))
+            try:
+                with gzip.open(path, 'rt') as f:
+                    for record in SeqIO.parse(f, 'fasta'):
+                        sequenceNameWriter.write("%s\t%s\n"%(record.id, ' '.join(record.description.split(' ')[1:])))
+            except (EOFError,FileNotFoundError) as e:
+                print(path, e,'\n', 'The RefSeq data were incompletely downloaded.')
         
     if sequenceName is not None:
         sequenceNameWriter.close()

@@ -28,9 +28,9 @@ python3 ${SCRIPT_PATH}/genConfigFile.py --assemblySummary ${DB_DIR}/protozoa/ass
 python3 ${SCRIPT_PATH}/genConfigFile.py --assemblySummary ${DB_DIR}/fungi/assembly_summary.txt --outputFile species_id.fungi.genome_set --outputFile2 assembly_id.fungi.genome_set --function 1
 python3 ${SCRIPT_PATH}/genConfigFile.py --assemblySummary ${DB_DIR}/viral/assembly_summary.txt --outputFile species_id.viral.genome_set --outputFile2 assembly_id.viral.genome_set --function 1
 
-python3 ${SCRIPT_PATH}/genConfigFile.py --assemblySummary ${DB_DIR}/vertebrate_mammalian/assembly_summary.txt --outputFile human.genome_set --function 2 #only first column is used
+python3 ${SCRIPT_PATH}/genConfigFile.py --assemblySummary ${DB_DIR}/vertebrate_mammalian/assembly_summary.txt --outputFile human.genome_set --function 2 #only the first column is used
 python3 ${SCRIPT_PATH}/genConfigFile.py --num 8 --outputFile plasmid.genome_set --function 3
 
-cat species_id.archaea.genome_set species_id.bacteria.genome_set species_id.protozoa.genome_set species_id.fungi.genome_set species_id.viral.genome_set > species_id.genome_set && rm species_id.archaea.genome_set species_id.bacteria.genome_set species_id.protozoa.genome_set species_id.fungi.genome_set species_id.viral.genome_set
-cat assembly_id.archaea.genome_set assembly_id.bacteria.genome_set assembly_id.protozoa.genome_set assembly_id.fungi.genome_set assembly_id.viral.genome_set > assembly_id.genome_set && rm assembly_id.archaea.genome_set assembly_id.bacteria.genome_set assembly_id.protozoa.genome_set assembly_id.fungi.genome_set assembly_id.viral.genome_set
-
+#same set of genomes for global selection (species) and specific selection (assembly)
+cat species_id.archaea.genome_set species_id.bacteria.genome_set species_id.protozoa.genome_set species_id.fungi.genome_set species_id.viral.genome_set assembly_id.archaea.genome_set assembly_id.bacteria.genome_set assembly_id.protozoa.genome_set assembly_id.fungi.genome_set assembly_id.viral.genome_set > species_id.genome_set && rm species_id.archaea.genome_set species_id.bacteria.genome_set species_id.protozoa.genome_set species_id.fungi.genome_set species_id.viral.genome_set assembly_id.archaea.genome_set assembly_id.bacteria.genome_set assembly_id.protozoa.genome_set assembly_id.fungi.genome_set assembly_id.viral.genome_set
+cp species_id.genome_set assembly_id.genome_set

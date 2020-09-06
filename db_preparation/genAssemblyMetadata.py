@@ -1,5 +1,5 @@
 import argparse
-from os import listdir, path, system
+import os
 import sys
 import pandas
 import gzip
@@ -59,6 +59,11 @@ def parseNodesDmp(nodesDmp):
 
     return taxid2parent, taxid2rank
 
+def excludeClade(rank):
+    if rank=='clade':
+        return 'no rank'
+    else:
+        return rank
 
 def summary(genome, nodesDmp, assemblyLength, assemblyPath, assemblyTaxid, sequenceSummary, db_dir):
     taxid2parent, taxid2rank = parseNodesDmp(nodesDmp)
@@ -80,14 +85,21 @@ def summary(genome, nodesDmp, assemblyLength, assemblyPath, assemblyTaxid, seque
         path = os.path.join(db_dir, "%s/%s/%s_genomic.fna.gz"%(genome, assemblyAccession, prefix))
         assemblyReportPath = os.path.join(db_dir, '%s/%s/%s_assembly_report.txt'%(genome, assemblyAccession, prefix))
         totalLength = 0
-        with gzip.open(path, 'rt') as f:
-            for record in SeqIO.parse(f, 'fasta'):
-                totalLength += len(record)
-                sequenceSummaryWriter.write("%s\t%d\t%s\n"%(record.id, len(record), assemblyAccession))
+
+        try:
+            with gzip.open(path, 'rt') as f:
+                for record in SeqIO.parse(f, 'fasta'):
+                    totalLength += len(record)
+                    sequenceSummaryWriter.write("%s\t%d\t%s\n"%(record.id, len(record), assemblyAccession))
+        except (EOFError,FileNotFoundError) as e:
+            print(path, e,'\n', 'The RefSeq data were incompletely downloaded.')
         
         assemblyLengthWriter.write("%s\t%d\n"%(assemblyAccession, totalLength))
         assemblyPathWriter.write("%s\t%s\n"%(assemblyAccession, path))
         if speciesTaxid in taxid2parent:
+            taxid2rank[speciesTaxid] = excludeClade(taxid2rank[speciesTaxid])
+            taxid2rank[taxid2parent[speciesTaxid]] = excludeClade(taxid2rank[taxid2parent[speciesTaxid]])
+
             if rankLookUpTable[taxid2rank[speciesTaxid]] > rankLookUpTable[taxid2rank[taxid2parent[speciesTaxid]]]:
                 sys.stderr.write("Error rank: %s\t%s\t%s\t%s\n"%(speciesTaxid, taxid2parent[speciesTaxid], taxid2rank[speciesTaxid], taxid2rank[taxid2parent[speciesTaxid]]))
             assemblyTaxidWriter.write("%s\t%s\t%s\t%s\t%s\n"%(assemblyAccession, taxid, speciesTaxid, taxid2parent[speciesTaxid], rankLookUpTable[taxid2rank[taxid2parent[speciesTaxid]]]))

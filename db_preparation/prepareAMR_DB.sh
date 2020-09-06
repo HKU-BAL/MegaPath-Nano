@@ -1,3 +1,4 @@
+#!/bin/bash
 SCRIPT=$(readlink -f $0)
 SCRIPT_PATH=$(dirname ${SCRIPT})
 ROOT_PATH=$(dirname $(dirname ${SCRIPT}))

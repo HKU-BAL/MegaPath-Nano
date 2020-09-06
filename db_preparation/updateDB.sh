@@ -48,16 +48,16 @@ cp ${SCRIPT_PATH}/source.csv source.csv
 
 #source.csv table is provided
 
-#sqlite3 script
-#import to db
+#sqlite3 script for importing to db
 #DELETE FROM table #remove all records from current table
 
-#sqlite>.mode csv
-#sqlite>.separator "\t"
-#sqlite>.import assembly_summary.csv assembly_summary
-#sqlite>.import sequence_name.csv sequence_name
-#sqlite>.import ranks.csv ranks
-#sqlite>.import names.csv names
-#sqlite>.import nodes.csv nodes
-#sqlite>.import source.csv source
-
+sqlite3 ncbi_taxonomy.db << 'END_SQL'
+.mode csv
+.separator "\t"
+.import assembly_summary.csv assembly_summary
+.import sequence_name.csv sequence_name
+.import ranks.csv ranks
+.import names.csv names
+.import nodes.csv nodes
+.import source.csv source
+END_SQL
