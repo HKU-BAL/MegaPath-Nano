@@ -50,7 +50,7 @@ def iterate_reassign(align_list,i_explains_j_dict,AS_threshold):
     def is_in_explain_other(x):
         return True if x in i_explains_j_dict.keys() else False
 
-    def second_index(x,AS_threshold):
+    def second_index(x):
         read_id = x['read_id']
         name = x['name']
         first_alignment_score = x['alignment_score']
@@ -80,7 +80,7 @@ def iterate_reassign(align_list,i_explains_j_dict,AS_threshold):
     species_ranking_list=uk['name'].value_counts().keys().tolist()
     uk['name']=pd.Categorical(uk['name'],categories=species_ranking_list,ordered=True)
     uk=uk.sort_values(ascending=True,by=['name'])
-    uk[['read_id','name','alignment_score','sequence_id']].parallel_apply( second_index ,args=(AS_threshold),axis=1)
+    uk[['read_id','name','alignment_score','sequence_id']].parallel_apply( second_index ,axis=1)
     return align_list
 
 FLAGS=None
@@ -133,15 +133,19 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
     pandarallel.initialize()
 
     for i in range(iteration):
+        print('Iteration:',i)
         align_list=iterate_reassign(align_list,i_explains_j_dict,AS_threshold)
         #should be no need to update align_list
-        update=pd.read_csv('alignlist_update.csv',names=['read_id', 'read_length', 'read_from', 'read_to', 'strand', 'sequence_id', 'sequence_length', 'sequence_from', 'sequence_to','match','alignment_block_length', 'mapq', 'edit_dist', 'alignment_score','assembly_id', 'tax_id', 'species_tax_id', 'genus_tax_id', 'alignment_score_tiebreaker','name','is_in_explain_other'])
-        raw_align_list.update(update[~update.index.duplicated(keep='first')])
-        os.remove('alignlist_update.csv')
-        print('iteration:',i)
+        if os.path.exists('alignlist_update.csv'):
+            update=pd.read_csv('alignlist_update.csv',names=['read_id', 'read_length', 'read_from', 'read_to', 'strand', 'sequence_id', 'sequence_length', 'sequence_from', 'sequence_to','match','alignment_block_length', 'mapq', 'edit_dist', 'alignment_score','assembly_id', 'tax_id', 'species_tax_id', 'genus_tax_id', 'alignment_score_tiebreaker','name','is_in_explain_other'])
+            raw_align_list.update(update[~update.index.duplicated(keep='first')])
+            os.remove('alignlist_update.csv')
+        else:
+            break
+
 
     raw_align_list=raw_align_list.astype({'read_id': str, 'read_length': int, 'read_from': int, 'read_to': int, 'strand': str, 'sequence_id': str, 'sequence_length': int, 'sequence_from' : int, 'sequence_to': int,'match': int, 'mapq': int, 'edit_dist': int, 'alignment_score': int,'assembly_id': str, 'tax_id': int, 'species_tax_id': int, 'genus_tax_id': int, 'alignment_score_tiebreaker': float,'alignment_block_length': int,'name': str})
-    raw_align_list.to_csv('updated.csv')
+    raw_align_list.to_csv('alignlist_reassigned.csv')
     return align_list
 
 
