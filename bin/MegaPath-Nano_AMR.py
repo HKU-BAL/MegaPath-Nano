@@ -367,8 +367,9 @@ if __name__ == "__main__":
     parser.add_argument('--output_folder', required=True,help='Output directory')
     parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
     parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
-    #TODO
-    parser.add_argument('--REFSEQ_PATH', default='refseq.fna.gz', help='The path of RefSeq')
+    cwd=os.path.dirname(os.path.realpath(__file__))
+    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    parser.add_argument('--REFSEQ_PATH', default=nano_dir+'/genomes/refseq/refseq.fna', help='The path of RefSeq')
     FLAGS = parser.parse_args()
 
     dir_arr = os.listdir(os.getcwd())

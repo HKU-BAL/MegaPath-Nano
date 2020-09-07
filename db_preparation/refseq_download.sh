@@ -20,3 +20,5 @@ python3 refseq_download.py --archaea --get_summary --db_dir ${DB_DIR} > nohup.ar
 python3 refseq_download.py --vertebrate_mammalian --get_summary > nohup.vertebrate_mammalian_refseq_download &
 #8 = number of plasmid file can be downloaded on ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/plasmid/--db_dir ${DB_DIR}
 python3 refseq_download.py --plasmid --num 8 --db_dir ${DB_DIR} > nohup.plasmid_refseq_download & 
+cd ${DB_DIR}
+parallel -j 48 'zcat {} >> refseq.fna' ::: */*/*gz
