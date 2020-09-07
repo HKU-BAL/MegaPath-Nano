@@ -65,9 +65,9 @@ required arguments:
                               Query file (fastq or fasta)
 
 optional arguments:
-  --max_aligner_thread INT    Maximum number of threads used by aligner, default 64. Actual number of threads is min( available num of cores, threads specified).
-  --output_prefix             Output Prefix, query file name will be used for output prefix by default.
-  --output_folder             Output folder, default ./.
+  --max_aligner_thread INT    Maximum number of threads used by aligner, default: 64. Actual number of threads is min( available num of cores, threads specified)
+  --output_prefix             Output Prefix, default: query file name
+  --output_folder             Output folder, default: ./.
 ```
 For all available options, please check [Usage.md](docs/Usage.md)
 
@@ -93,7 +93,7 @@ required arguments:
 
 optional arguments:
   --taxon TAXON               Taxon-specific options for AMRFinder [e.g. --taxon Escherichia], see usage for the full list of curated organisms
-  --threads THREADS           Max num of threads
+  --threads THREADS           Max num of threads, default: available num of cores
 ```
 
 (4) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
