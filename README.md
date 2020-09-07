@@ -73,15 +73,17 @@ For all available options, please check [Usage.md](docs/Usage.md)
 
 (2) Run taxonomic analysis module only
 ```
-python MegaPath-Nano.py --query ${fq/fa} [options] --taxon_module_only
-
-required arguments:
-  --query
-                              Query file (fastq or fasta)
+python MegaPath-Nano.py --query ${fq/fa} --taxon_module_only [options]
 
 ```
 
-(3) Run AMR deteciton module only
+(3) Run AMR deteciton module only with FQ/FA
+```
+python MegaPath-Nano.py --query ${fq/fa} --AMR_module_only [options]
+
+```
+
+(3) Run AMR deteciton module only with BAM
 ```
 python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
 
