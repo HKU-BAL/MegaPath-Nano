@@ -56,8 +56,7 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 ```
 
 ## Basic usage
-
-(1) Run taxonomic analysis module only
+(1) Run taxonomic analysis and AMR deteciton module
 ```
 python MegaPath-Nano_taxon.py --query ${fq/fa} [options]
 
@@ -66,14 +65,23 @@ required arguments:
                               Query file (fastq or fasta)
 
 optional arguments:
-  --aligner                   Path to minimap2 aligner, default 'minimap2 within the PATH'.
-  --max_aligner_thread INT    Maximum number of threads used by aligner, default 64.
+  --max_aligner_thread INT    Maximum number of threads used by aligner, default 64. Actual number of threads is min( available num of cores, threads specified).
   --output_prefix             Output Prefix, query file name will be used for output prefix by default.
   --output_folder             Output folder, default ./.
 ```
 For all available options, please check [Usage.md](docs/Usage.md)
 
-(2) Run AMR deteciton module only
+(2) Run taxonomic analysis module only
+```
+python MegaPath-Nano_taxon.py --query ${fq/fa} [options] --no_AMR_module
+
+required arguments:
+  --query
+                              Query file (fastq or fasta)
+
+```
+
+(3) Run AMR deteciton module only
 ```
 python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
 
@@ -88,7 +96,7 @@ optional arguments:
   --threads THREADS           Max num of threads
 ```
 
-(3) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
+(4) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
 ```
 python MegaPath-Nano_taxon.py --query ${fq/fa} --filter_fq_only [options]
 ```
