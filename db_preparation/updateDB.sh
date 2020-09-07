@@ -30,7 +30,7 @@ python ${SCRIPT_PATH}/genSequenceName.py --function 2 --sequenceName plasmid.seq
 cat abhvfp.sequence_name plasmid.sequence_name > sequence_name.csv && rm abhvfp.sequence_name plasmid.sequence_name
 
 #assembly_summary table
-python ${SCRIPT_PATH}/genAssemblySummary.py --db_dir ${DB_DIR} --assemblySummary assembly_summary
+python ${SCRIPT_PATH}/genAssemblySummary.py --db_dir ${DB_DIR} --assemblySummary assembly_summary.csv
 
 #ranks
 python ${SCRIPT_PATH}/genRank.py --ranks ranks.csv
@@ -54,10 +54,62 @@ cp ${SCRIPT_PATH}/source.csv source.csv
 sqlite3 ncbi_taxonomy.db << 'END_SQL'
 .mode csv
 .separator "\t"
+CREATE TABLE assembly_summary(
+assembly_id char(20) not null,
+bioproject char(20),
+biosample char(20),
+wgs_master char(20),
+refseq_category char(30),
+taxid int not null,
+species_taxid int not null,
+organism_name char(150),
+infraspecific_name char(150),
+isolate char(150),
+version_status char(15),
+assembly_level char(20),
+release_type char(15),
+genome_rep char(15),
+seq_rel_date char(10),
+asm_name char(150),
+submitter char(255),
+gbrs_paired_asm char(20),
+paired_asm_comp char(20),
+ftp_path char(250),
+excluded_from_refseq char(100),
+relation_to_type_material char(100));
 .import assembly_summary.csv assembly_summary
+CREATE TABLE sequence_name (sequence_id char(20), sequence_name char(100));
+CREATE UNIQUE INDEX idx_sequence_name_sequence_id on sequence_name (sequence_id);
 .import sequence_name.csv sequence_name
+CREATE TABLE ranks (
+        rank VARCHAR NOT NULL,
+        height INTEGER NOT NULL,
+        PRIMARY KEY (rank),
+        UNIQUE (height)
+);
 .import ranks.csv ranks
+create table names(tax_id,tax_name,unique_name,name_class,source_id,is_primary,is_classified);
 .import names.csv names
+CREATE TABLE nodes (
+        tax_id VARCHAR NOT NULL,
+        parent_id VARCHAR,
+        rank VARCHAR,
+        embl_code VARCHAR,
+        division_id VARCHAR,
+        source_id INTEGER,
+        is_valid BOOLEAN,
+        PRIMARY KEY (tax_id),
+        FOREIGN KEY(rank) REFERENCES ranks (rank),
+        FOREIGN KEY(source_id) REFERENCES source (id),
+        CHECK (is_valid IN (0, 1))
+);
 .import nodes.csv nodes
+CREATE TABLE source (
+        id INTEGER NOT NULL,
+        name VARCHAR,
+        description VARCHAR,
+        PRIMARY KEY (id),
+        UNIQUE (name)
+);
 .import source.csv source
 END_SQL
