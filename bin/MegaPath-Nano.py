@@ -1273,10 +1273,13 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               aligner_options=shlex.split(megapath_nano.global_options['alignerThreadOption'] + ' -N 1000 -p 0 -x map-ont'),
                                               paf_path_and_prefix=placement_to_species.I.paf_path_and_prefix,
                                               mapping_only=megapath_nano.global_options['mapping_only'],
-                                              AMR_module=megapath_nano.global_options['AMR_module']
+                                              taxon_and_AMR_module_option=FLAGS.taxon_and_AMR_module_option,
                                               AMR_output_folder=megapath_nano.output_folder)
     if megapath_nano.global_options['debug'] == True:
         placement_to_species.O.align_list.to_csv(path_or_buf=file_prefix_with_path + '.species_align_list', sep='\t', header=True, index=False)
+
+    if FLAGS.taxon_and_AMR_module_option=='AMR_module_only':
+        os.sys.exit('Finished alignment.')
 
     placement_to_species.O.align_list=Reassign(placement_to_species.O.align_list)
 
@@ -3950,8 +3953,6 @@ def main():
                                'microbe_repetitive_region_filter_min_average_depth':FLAGS.microbe_repetitive_region_filter_min_average_depth,
                                'microbe_repetitive_region_filter_max_span_percent_overall':FLAGS.microbe_repetitive_region_filter_max_span_percent_overall,
                                'good_alignment_threshold':FLAGS.good_alignment_threshold,
-                               'all_taxon_steps':FLAGS.all_taxon_steps,
-                               'AMR_module':FLAGS.AMR_module,
 
                                # system global variables
                                'debug':FLAGS.debug,
@@ -4846,9 +4847,10 @@ if __name__ == '__main__':
     group_filter_fq_only.add_argument('--all_taxon_steps', dest='all_taxon_steps', action='store_true')
     group_filter_fq_only.add_argument('--filter_fq_only', dest='all_taxon_steps', action='store_false')
 
-    group_AMR_module = parser.add_mutually_exclusive_group(required=False)
-    group_AMR_module.add_argument('--AMR_module', dest='AMR_module', action='store_true')
-    group_AMR_module.add_argument('--taxon_module_only', dest='AMR_module', action='store_false')
+    group_taxon_and_AMR_module_option = parser.add_mutually_exclusive_group(required=False)
+    group_taxon_and_AMR_module_option.add_argument('--taxon_and_AMR_module', dest='taxon_and_AMR_module_option', action='store_const',const='taxon_and_AMR_module')
+    group_taxon_and_AMR_module_option.add_argument('--taxon_module_only', dest='taxon_and_AMR_module_option', action='store_const',const='taxon_module_only')
+    group_taxon_and_AMR_module_option.add_argument('--AMR_module_only', dest='taxon_and_AMR_module_option', action='store_const',const='AMR_module_only')
     # Set up for output options
 
     group_output_adaptor_trimmed_query = parser.add_mutually_exclusive_group(required=False)
@@ -4925,7 +4927,7 @@ if __name__ == '__main__':
     parser.set_defaults(similar_species_marker=False)
     parser.set_defaults(reassign_read_id=False)
     parser.set_defaults(all_taxon_steps=True)
-    parser.set_defaults(AMR_module=True)
+    parser.set_defaults(taxon_and_AMR_module_option='taxon_and_AMR_module')
 
     # experimental
     parser.set_defaults(mapping_only=False)
