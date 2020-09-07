@@ -1,9 +1,6 @@
 import argparse
-from os import listdir, path, system
-import sys
+import os  
 import pandas
-import gzip
-from Bio import SeqIO
 
 FLAGS = None
 
@@ -23,16 +20,17 @@ def summary(refseqGenome, assemblySummary):
     assembly_summary_2 = pandas.read_csv(refseqGenome+'/plasmid/assembly_summary.txt', dtype=str, sep='\t')
     assembly_summary = assembly_summary.append(assembly_summary_2)
 
-    assembly_summary.to_csv(assemblySummary, sep='\t', header=False, index=False)
+    assembly_summary.to_csv(assemblySummary+'.original', sep='\t', header=False, index=False)
     
     fileWriter = open(assemblySummary, 'w')
-    with open(assemblySummary, 'r') as f:
+    with open(assemblySummary+'.original', 'r') as f:
         for line in f:
             eles = line.split('\t')
             for i in range(len(eles)):
                 eles[i] = eles[i].replace('"', '')
             fileWriter.write("\t".join(eles))
     fileWriter.close()
+    os.remove(assemblySummary+'.original')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Refseq assembly info update')
