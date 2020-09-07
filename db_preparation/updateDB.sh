@@ -37,11 +37,11 @@ python ${SCRIPT_PATH}/genRank.py --ranks ranks.csv
 
 #names and nodes
 python ${SCRIPT_PATH}/parseDml.py --dmp names.dmp --outputFile abhvfp.names --function 1
-python ${SCRIPT_PATH}/parseDml.py ----outputFile plasmid.names --function 3 --num 8 
+python ${SCRIPT_PATH}/parseDml.py --outputFile plasmid.names --function 3 --num 8 
 cat abhvfp.names plasmid.names > names.csv && rm abhvfp.names plasmid.names
 
 python ${SCRIPT_PATH}/parseDml.py --dmp nodes.dmp --outputFile abhvfp.nodes --function 2
-python ${SCRIPT_PATH}/parseDml.py ----outputFile plasmid.nodes --function 4 --num 8
+python ${SCRIPT_PATH}/parseDml.py --outputFile plasmid.nodes --function 4 --num 8
 cat abhvfp.nodes plasmid.nodes > nodes.csv && rm abhvfp.nodes plasmid.nodes
 
 cp ${SCRIPT_PATH}/source.csv source.csv
