@@ -181,7 +181,7 @@ def Align(*,
         sam_file = os.open(sam_filename, flags=os.O_CREAT |  os.O_WRONLY|os.O_TRUNC, mode=0o644)
 
     #  align query to target (input from named pipe)
-    aligner_command = [os.path.join(global_options['tool_folder'], global_options['aligner']),]
+    aligner_command = [global_options['aligner'],]
     if mapping_only == False:
         aligner_command.extend(('-c',))
     
