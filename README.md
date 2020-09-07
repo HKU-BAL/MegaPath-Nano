@@ -88,7 +88,7 @@ optional arguments:
   --threads THREADS           Max num of threads
 ```
 
-(3) Filter FASTQ only: Adaptor trimming, read filtering and trimming, human or decoy filtering
+(3) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
 ```
 python MegaPath-Nano_taxon.py --query ${fq/fa} --filter_fq_only [options]
 ```
