@@ -88,6 +88,11 @@ optional arguments:
   --threads THREADS           Max num of threads
 ```
 
+(3) Filtering FASTQ only: Adaptor trimming, read filtering and trimming, human or decoy filtering
+```
+python MegaPath-Nano_taxon.py --query ${fq/fa} --filter_fq_only
+```
+
 ## Demo data
 
 The demo data for AMR detection of five patient isolates are available for download on http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/. Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9.4.1 flowcells.
