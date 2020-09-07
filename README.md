@@ -58,7 +58,7 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 ## Basic usage
 (1) Run taxonomic analysis and AMR deteciton module
 ```
-python MegaPath-Nano_taxon.py --query ${fq/fa} [options]
+python MegaPath-Nano.py --query ${fq/fa} [options]
 
 required arguments:
   --query
@@ -73,7 +73,7 @@ For all available options, please check [Usage.md](docs/Usage.md)
 
 (2) Run taxonomic analysis module only
 ```
-python MegaPath-Nano_taxon.py --query ${fq/fa} [options] --no_AMR_module
+python MegaPath-Nano.py --query ${fq/fa} [options] --taxon_module_only
 
 required arguments:
   --query
@@ -98,7 +98,7 @@ optional arguments:
 
 (4) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
 ```
-python MegaPath-Nano_taxon.py --query ${fq/fa} --filter_fq_only [options]
+python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
 ```
 
 ## Demo data
