@@ -108,3 +108,10 @@ python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
 The demo data for AMR detection of five patient isolates are available for download on http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/. Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9.4.1 flowcells.
   
 The experimental validation results of these AMR demo datasets are listed on [Supplementary_info_AMR](docs/Supplementary_info_demo_AMR_data.md).
+
+## Demo script
+
+```
+wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/Escherichia_coli_isolate2_HKUBAL_20200103.fastq
+python MegaPath-Nano.py --query Escherichia_coli_isolate2_HKUBAL_20200103.fastq
+```
