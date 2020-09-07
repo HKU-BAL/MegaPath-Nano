@@ -1272,7 +1272,9 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               target_assembly_list=placement_to_species.I.target_assembly_list,
                                               aligner_options=shlex.split(megapath_nano.global_options['alignerThreadOption'] + ' -N 1000 -p 0 -x map-ont'),
                                               paf_path_and_prefix=placement_to_species.I.paf_path_and_prefix,
-                                              mapping_only=megapath_nano.global_options['mapping_only'],)
+                                              mapping_only=megapath_nano.global_options['mapping_only'],
+                                              AMR_module=megapath_nano.global_options['AMR_module']
+                                              AMR_output_folder=megapath_nano.output_folder)
     if megapath_nano.global_options['debug'] == True:
         placement_to_species.O.align_list.to_csv(path_or_buf=file_prefix_with_path + '.species_align_list', sep='\t', header=True, index=False)
 
@@ -3898,6 +3900,7 @@ def main():
 
                                'max_aligner_thread':FLAGS.max_aligner_thread,
                                'max_qcat_thread':FLAGS.max_qcat_thread,
+                               'max_AMR_thread':FLAGS.max_AMR_thread,
 
                                'genus_height':FLAGS.genus_height,
 
@@ -3947,7 +3950,8 @@ def main():
                                'microbe_repetitive_region_filter_min_average_depth':FLAGS.microbe_repetitive_region_filter_min_average_depth,
                                'microbe_repetitive_region_filter_max_span_percent_overall':FLAGS.microbe_repetitive_region_filter_max_span_percent_overall,
                                'good_alignment_threshold':FLAGS.good_alignment_threshold,
-                               'all_steps':FLAGS.all_steps,
+                               'all_taxon_steps':FLAGS.all_taxon_steps,
+                               'AMR_module':FLAGS.AMR_module,
 
                                # system global variables
                                'debug':FLAGS.debug,
@@ -3998,8 +4002,8 @@ def main():
     megapath_nano.global_options['max_target_GBase_per_batch'] = ram_available // 1024 // 1024 // 1024 // 8 
 
     megapath_nano.global_options['alignerThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_aligner_thread'])) + ' -I ' + str(megapath_nano.global_options['max_target_GBase_per_batch']) + 'G'
-    megapath_nano.global_options['alignerThreadOption'] = '-t ' + str( megapath_nano.global_options['max_aligner_thread']) + ' -I ' + str(megapath_nano.global_options['max_target_GBase_per_batch']) + 'G'
-    megapath_nano.global_options['qcatThreadOption'] = '-t ' + str( megapath_nano.global_options['max_qcat_thread'])
+    megapath_nano.global_options['qcatThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_qcat_thread']))
+    megapath_nano.global_options['AMRThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_AMR_thread']))
 
     megapath_nano.log.print('Loading assembly metadata')
 
@@ -4154,7 +4158,8 @@ def main():
     # human_and_decoy_filter.O.microbe_read_id_list       format: ['read_id', 'read_length']
     
     
-    if FLAGS.all_steps == False:
+    if FLAGS.all_taxon_steps == False:
+        print('Finished all taxon steps')
         os.sys.exit()
     
     
@@ -4838,9 +4843,12 @@ if __name__ == '__main__':
     group_reassign_read_id.add_argument('--no-reassign_read_id', dest='reassign_read_id', action='store_false')
     
     group_filter_fq_only = parser.add_mutually_exclusive_group(required=False)
-    group_filter_fq_only.add_argument('--all_steps', dest='all_steps', action='store_true')
-    group_filter_fq_only.add_argument('--filter_fq_only', dest='all_steps', action='store_false')
+    group_filter_fq_only.add_argument('--all_taxon_steps', dest='all_taxon_steps', action='store_true')
+    group_filter_fq_only.add_argument('--filter_fq_only', dest='all_taxon_steps', action='store_false')
 
+    group_AMR_module = parser.add_mutually_exclusive_group(required=False)
+    group_AMR_module.add_argument('--AMR_module', dest='AMR_module', action='store_true')
+    group_AMR_module.add_argument('--no-AMR_module', dest='AMR_module', action='store_false')
     # Set up for output options
 
     group_output_adaptor_trimmed_query = parser.add_mutually_exclusive_group(required=False)
@@ -4916,7 +4924,8 @@ if __name__ == '__main__':
     parser.set_defaults(noise_projection=False)
     parser.set_defaults(similar_species_marker=False)
     parser.set_defaults(reassign_read_id=False)
-    parser.set_defaults(all_steps=True)
+    parser.set_defaults(all_taxon_steps=True)
+    parser.set_defaults(AMR_module=True)
 
     # experimental
     parser.set_defaults(mapping_only=False)

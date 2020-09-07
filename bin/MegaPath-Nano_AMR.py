@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import psutil
 import sys, getopt, subprocess, os, time, resource
 import pysam
 from concurrent.futures import ThreadPoolExecutor
@@ -365,7 +366,7 @@ if __name__ == "__main__":
     parser.add_argument('--query_bam', required=True,help='Input bam')
     parser.add_argument('--output_folder', required=True,help='Output directory')
     parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
-    parser.add_argument('--threads', default='48', help='Max num of threads')
+    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
     #TODO
     parser.add_argument('--REFSEQ_PATH', default='refseq.fna.gz', help='The path of RefSeq')
     FLAGS = parser.parse_args()

@@ -101,7 +101,10 @@ def Align(*,
           target_assembly_list=None, 
           aligner_options=None,
           paf_path_and_prefix=None,
-          mapping_only=False,):
+          mapping_only=False,
+          AMR_module=True,
+          AMR_output_folder='',
+          ):
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
 
     num_target_specification = 0
@@ -211,12 +214,11 @@ def Align(*,
         aligner_process.wait()
         convert=SAM2PAF(sam_filename,paf_filename)
         convert(pri_only=False)
-        #samtools view -F2308 -b barcode09_10-8.species.sam|samtools sort -o barcode09_10-8.species.bam 2>/dev/null;samtools index barcode09_10-8.species.bam
-        #SAM2BAM_process = subprocess.Popen(SAM2BAM_command, close_fds=True, stdout=sort_and_index_bam_stdin, stderr=subprocess.DEVNULL)
         bam_filename=paf_path_and_prefix+'.bam'
-        samtools_bin=os.path.join(global_options['tool_folder'], 'samtools')
-        sort_and_index_bam_command = '{samtools} view -F2308 -b {sam}|{samtools} sort -o {bam};{samtools} index {bam}'.format(samtools=samtools_bin,sam=sam_filename,bam=bam_filename)
-        sort_and_index_bam_process = subprocess.Popen(sort_and_index_bam_command, shell=True, stderr=subprocess.DEVNULL)
+        bam_operation_command = 'samtools view -F2308 -b {sam}|samtools sort -o {bam};samtools index {bam}'.format(sam=sam_filename,bam=bam_filename)
+        if run_AMR==True:
+            bam_operation_command+=';python {path}/MegaPath-Nano_AMR.py --query_bam {bam} --output_folder {AMR_output_folder} --threads {threads}'.format(path=os.path.dirname(os.path.dirname(os.path.realpath(__file__))),bam=bam_filename,AMR_output_folder=AMR_output_folder,threads=global_options['AMRThreadOption'])
+        bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
         awk_stdin= os.open(paf_filename, flags=os.O_RDONLY)
     elif output_PAF == False:
         awk_stdin = aligner_process.stdout

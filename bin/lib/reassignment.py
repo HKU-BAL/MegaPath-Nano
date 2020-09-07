@@ -8,6 +8,7 @@ from collections import Counter
 from pandarallel import pandarallel
 from concurrent.futures import ThreadPoolExecutor
 import json
+import psutil
 
 def build_mcount_set_list(species_name_list,mcount_set_list):
     list_n=len(species_name_list)
@@ -155,7 +156,7 @@ if __name__ == '__main__':
     parser.add_argument('--AS_threshold', default=0.0, help='Percentage of AS required for an alignment to be reassigned to another species from the original species')
     parser.add_argument('--ratio', default=0.05, help='Ratio of dissimilarity between species')
     parser.add_argument('--error_rate', default=0.05, help='Allowed error rate')
-    parser.add_argument('--threads', default=48, help='Max num of threads')
+    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
     parser.add_argument('--iteration', default=1, help='Num of iterations')
     FLAGS = parser.parse_args()
     align_list=pd.read_csv(FLAGS.align_list, index_col =0)
