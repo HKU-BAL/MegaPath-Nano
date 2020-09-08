@@ -46,7 +46,6 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 
 # prepare SQL db data:
 ./updateDB.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/] [${SQL_DIR}=MegaPath-Nano/db/]
-# and then follows the sqlite script in updateDB.sh to import data to SQL tables.
 
 
 # AMR
