@@ -77,7 +77,7 @@ python MegaPath-Nano.py --query ${fq/fa} --taxon_module_only [options]
 
 ```
 
-(3) Run AMR deteciton module only with **FQ/FA**
+(3) Run AMR deteciton module only with **FASTQ/FASTA**
 ```
 python MegaPath-Nano.py --query ${fq/fa} --AMR_module_only [options]
 
