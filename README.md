@@ -75,15 +75,15 @@ python MegaPath-Nano.py --query ${fq/fa} --taxon_module_only [options]
 
 ```
 
-(3) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
-```
-python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
-```
-
-(4) Run AMR deteciton module only with **FASTQ/FASTA**
+(3) Run AMR deteciton module only with **FASTQ/FASTA**
 ```
 python MegaPath-Nano.py --query ${fq/fa} --AMR_module_only [options]
 
+```
+
+(4) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
+```
+python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
 ```
 For all available options, please check [Usage.md](docs/Usage.md)
 
