@@ -20,8 +20,8 @@ conda create -n mpn python=3.6
 conda activate mpn
 
 # installing all dependencies for both modules
-conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools cgecore pysam tabulate rgi ncbi-amrfinderplus
-pip install pandarallel
+conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools cgecore pysam tabulate ncbi-amrfinderplus
+pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick pandarallel
 
 ```
 
