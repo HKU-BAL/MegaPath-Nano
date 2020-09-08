@@ -86,8 +86,8 @@ python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
 python MegaPath-Nano.py --query ${fq/fa} --AMR_module_only [options]
 
 ```
-
 For all available options, please check [Usage.md](docs/Usage.md)
+
 
 (5) Run AMR deteciton module only with **BAM**
 ```
