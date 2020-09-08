@@ -69,7 +69,6 @@ optional arguments:
   --output_prefix             Output Prefix, default: query file name
   --output_folder             Output folder, default: ./.
 ```
-For all available options, please check [Usage.md](docs/Usage.md)
 
 (2) Run taxonomic analysis module only
 ```
@@ -77,13 +76,20 @@ python MegaPath-Nano.py --query ${fq/fa} --taxon_module_only [options]
 
 ```
 
-(3) Run AMR deteciton module only with **FQ/FA**
+(3) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
+```
+python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
+```
+
+(4) Run AMR deteciton module only with **FASTQ/FASTA**
 ```
 python MegaPath-Nano.py --query ${fq/fa} --AMR_module_only [options]
 
 ```
+For all available options, please check [Usage.md](docs/Usage.md)
 
-(4) Run AMR deteciton module only with **BAM**
+
+(5) Run AMR deteciton module only with **BAM**
 ```
 python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
 
@@ -98,10 +104,7 @@ optional arguments:
   --threads THREADS           Max num of threads, default: available num of cores
 ```
 
-(5) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
-```
-python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
-```
+
 
 ## Demo data
 
