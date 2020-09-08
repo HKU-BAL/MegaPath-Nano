@@ -1274,7 +1274,7 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               paf_path_and_prefix=placement_to_species.I.paf_path_and_prefix,
                                               mapping_only=megapath_nano.global_options['mapping_only'],
                                               taxon_and_AMR_module_option=FLAGS.taxon_and_AMR_module_option,
-                                              AMR_output_folder=megapath_nano.output_folder)
+                                              AMR_output_folder=megapath_nano.output_folder+'/AMR/')
     if megapath_nano.global_options['debug'] == True:
         placement_to_species.O.align_list.to_csv(path_or_buf=file_prefix_with_path + '.species_align_list', sep='\t', header=True, index=False)
 
@@ -4004,7 +4004,7 @@ def main():
 
     megapath_nano.global_options['alignerThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_aligner_thread'])) + ' -I ' + str(megapath_nano.global_options['max_target_GBase_per_batch']) + 'G'
     megapath_nano.global_options['qcatThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_qcat_thread']))
-    megapath_nano.global_options['AMRThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_AMR_thread']))
+    megapath_nano.global_options['AMRThreadOption'] = str(min(num_core, megapath_nano.global_options['max_AMR_thread']))
 
     megapath_nano.log.print('Loading assembly metadata')
 

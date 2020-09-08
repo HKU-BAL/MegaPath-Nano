@@ -112,8 +112,8 @@ def mergeResults(dir_arr):
         accID = accID[:-1]  #removing slash
 
         card = []
-        if os.path.isfile("{acc_id}/card/card.txt".format(accID=accID)) and os.path.getsize("{acc_id}/card/card.txt".format(accID=accID)):
-            card = subprocess.check_output("cat {acc_id}/card/card.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
+        if os.path.isfile("{accID}/card/card.txt".format(accID=accID)) and os.path.getsize("{accID}/card/card.txt".format(accID=accID)):
+            card = subprocess.check_output("cat {accID}/card/card.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
 
         for rec in card:
             
@@ -137,8 +137,8 @@ def mergeResults(dir_arr):
                     c_score[cdrug] = c_score[cdrug] + col[2]
 
         resf = []
-        if os.path.isfile("{acc_id}/resfinder/resf.txt".format(accID=accID)) and os.path.getsize("{acc_id}/resfinder/resf.txt".format(accID=accID)):
-            resf = subprocess.check_output("cat {acc_id}/resfinder/resf.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
+        if os.path.isfile("{accID}/resfinder/resf.txt".format(accID=accID)) and os.path.getsize("{accID}/resfinder/resf.txt".format(accID=accID)):
+            resf = subprocess.check_output("cat {accID}/resfinder/resf.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
         for rec in resf:
             
             col = rec.split("\t")
@@ -166,8 +166,8 @@ def mergeResults(dir_arr):
                         r_gene[rdrug] = r_gene[rdrug] + col[1]
                         r_score[rdrug] = r_score[rdrug] + col[2]
         mega=[]
-        if os.path.isfile("{acc_id}/megares/megares.txt".format(accID=accID)) and os.path.getsize("{acc_id}/megares/megares.txt".format(accID=accID)):
-            mega = subprocess.check_output("cat {acc_id}/megares/megares.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
+        if os.path.isfile("{accID}/megares/megares.txt".format(accID=accID)) and os.path.getsize("{accID}/megares/megares.txt".format(accID=accID)):
+            mega = subprocess.check_output("cat {accID}/megares/megares.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
         for rec in mega:
             
             col = rec.split("\t")
@@ -195,8 +195,8 @@ def mergeResults(dir_arr):
                         m_score[mdrug] = m_score[mdrug] + col[2].strip()
         
         cbmar=[]
-        if os.path.isfile("{acc_id}/cbmar/cbmar.txt".format(accID=accID)) and os.path.getsize("{acc_id}/cbmar/cbmar.txt".format(accID=accID)):
-            cbmar = subprocess.check_output("cat {acc_id}/cbmar/cbmar.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
+        if os.path.isfile("{accID}/cbmar/cbmar.txt".format(accID=accID)) and os.path.getsize("{accID}/cbmar/cbmar.txt".format(accID=accID)):
+            cbmar = subprocess.check_output("cat {accID}/cbmar/cbmar.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
         for rec in cbmar:
             
             col = rec.split("\t")
@@ -227,8 +227,8 @@ def mergeResults(dir_arr):
 
         # merge the amrfinder results:
         amrf = []
-        if os.path.isfile("{acc_id}/amrfinder/amrf.txt".format(accID=accID)) and os.path.getsize("{acc_id}/amrfinder/amrf.txt".format(accID=accID)):
-            amrf = subprocess.check_output("cat {acc_id}/amrfinder/amrf.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
+        if os.path.isfile("{accID}/amrfinder/amrf.txt".format(accID=accID)) and os.path.getsize("{accID}/amrfinder/amrf.txt".format(accID=accID)):
+            amrf = subprocess.check_output("cat {accID}/amrfinder/amrf.txt".format(accID=accID),encoding='utf-8', shell=True).strip().split("\n")
         for rec in amrf:
             
             col = rec.split("\t")
@@ -371,10 +371,7 @@ if __name__ == "__main__":
     nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser.add_argument('--REFSEQ_PATH', default=nano_dir+'/genomes/refseq/refseq.fna', help='The path of RefSeq')
     FLAGS = parser.parse_args()
-
-    dir_arr = os.listdir(os.getcwd())
-    if not (FLAGS.output_folder in dir_arr):
-        os.makedirs(FLAGS.output_folder)
+    os.makedirs(FLAGS.output_folder,exist_ok=True)
     bam_path = os.path.abspath(FLAGS.query_bam)
     os.chdir(FLAGS.output_folder)
     print("current directory: " + os.getcwd())
@@ -396,18 +393,14 @@ if __name__ == "__main__":
     # make the output directory
     os.makedirs("results",exist_ok=True)
     
-    #clean and reload db before rgi main
-    os.system("rgi clean")
-    os.system("rgi load --card_json card/card.json")
-
-    processTaxID(bam_path,FLAGS.REFSEQ_PATH)
+    processTaxID(bam_path)
 
     print("All results have been generated")
     os.chdir("results")
     print("current directory " + os.getcwd())
 
     try:
-        dir_arr = subprocess.check_output("ls -d */",encoding='utf-8', shell=True).strip().split("\n")
+        dir_arr = next(os.walk('.'), ([],[],[]))[1]
     except subprocess.CalledProcessError:
         print("No accession ID is mapped with the sequence ID in bam.")
     else:
