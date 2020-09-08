@@ -102,7 +102,7 @@ def Align(*,
           aligner_options=None,
           paf_path_and_prefix=None,
           mapping_only=False,
-          taxon_and_AMR_module_option='taxon_and_AMR_module',
+          taxon_and_AMR_module_option='',
           AMR_output_folder='',
           ):
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
@@ -211,14 +211,15 @@ def Align(*,
         cat_process.wait()
 
     if output_PAF == True:
+        os.close(temp_pipe_target_fasta)
         aligner_process.wait()
-        convert=SAM2PAF(sam_filename,paf_filename)
-        convert(pri_only=False)
         bam_filename=paf_path_and_prefix+'.bam'
         bam_operation_command = 'samtools view -F2308 -b {sam}|samtools sort -o {bam};samtools index {bam}'.format(sam=sam_filename,bam=bam_filename)
-        if taxon_and_AMR_module_option=='taxon_and_AMR_module_option' or taxon_and_AMR_module_option=='AMR_module_only':
+        if taxon_and_AMR_module_option=='taxon_and_AMR_module' or taxon_and_AMR_module_option=='AMR_module_only':
             bam_operation_command+=';python {path}/MegaPath-Nano_AMR.py --query_bam {bam} --output_folder {AMR_output_folder} --threads {threads}'.format(path=os.path.dirname(os.path.dirname(os.path.realpath(__file__))),bam=bam_filename,AMR_output_folder=AMR_output_folder,threads=global_options['AMRThreadOption'])
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
+        convert=SAM2PAF(sam_filename,paf_filename)
+        convert(pri_only=False)
         awk_stdin= os.open(paf_filename, flags=os.O_RDONLY)
     elif output_PAF == False:
         awk_stdin = aligner_process.stdout

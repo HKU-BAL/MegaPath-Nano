@@ -65,10 +65,10 @@ def iterate_reassign(align_list,i_explains_j_dict,AS_threshold):
         if not search_pair.empty:
             search_pair['first_alignment_score'] = first_alignment_score
 
-            def first_AS_passed(x,AS_threshold):
+            def first_AS_passed(x):
                 return True if x['alignment_score'] * AS_threshold <= x['first_alignment_score'] else False
 
-            search_pair['first_AS_passed'] = search_pair[['alignment_score','first_alignment_score']].apply(first_AS_passed,args=(AS_threshold),axis=1)
+            search_pair['first_AS_passed'] = search_pair[['alignment_score','first_alignment_score']].apply(first_AS_passed,axis=1)
             search_pair=search_pair[search_pair["first_AS_passed"]]
 
             align_list.loc[search_pair.index,['name','sequence_id']]=[name,name+"_RA"]
