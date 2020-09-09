@@ -9,7 +9,7 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 ## Prerequisites
 Tested OS environment: Ubuntu 16.04
 
-## Conda Virtual Environment Setup
+## Option 1: Conda Virtual Environment Setup
 ```
 # prioritize channels
 conda config --add channels defaults
@@ -20,15 +20,19 @@ conda create -n mpn python=3.6
 conda activate mpn
 
 # installing all dependencies for both modules
-conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools cgecore pysam tabulate ncbi-amrfinderplus
-pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick pandarallel
+conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools pysam tabulate cgecore ncbi-amrfinderplus
+pip install -Iv biopython==1.72  #for compatibility until an update of rgi
+pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick seaborn pandarallel
 
-```
-
-## Git clone MegaPath-Nano
-```
+# git clone MegaPath-Nano
 git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano
 cd MegaPath-Nano
+```
+
+## Option 2: Docker
+```
+docker build -f ./Dockerfile -t mpn_image . 
+docker run -it mpn_image /bin/bash
 ```
 
 ## Database Installation
