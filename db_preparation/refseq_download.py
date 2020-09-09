@@ -82,33 +82,39 @@ def getValidAssemble(assembly_summary,assemblySummary_path):
 
 def download_assembly(i,assembly_summary,genome_dir,genome):
 
+
     prefix = assembly_summary['ftp_path'][i][assembly_summary['ftp_path'][i].find(assembly_summary['# assembly_accession'][i]):]
+    assembly_path=os.path.join(genome_dir, assembly_summary['# assembly_accession'][i])
 
     print('   ', genome, i + 1, 'of', assembly_summary.shape[0], ': ', assembly_summary['# assembly_accession'][i], end='', flush=True)
-    assembly_path=os.path.join(genome_dir, assembly_summary['# assembly_accession'][i])
-    if os.path.exists(assembly_path) != True:
-        status = os.system('mkdir %s'%(assembly_path))
-        if status != 0:
-            print("mkdir failed", flush=True)
-            sys.exit()
 
+    os.makedirs(assembly_path,exist_ok=True)
+
+    if_assembly_report=False
     if os.path.exists(os.path.join(assembly_path, "%s_assembly_report.txt"%(prefix))) != True:
-        status = os.system("wget -a wget.log -N -P " + assembly_path  + " " +
-                assembly_summary['ftp_path'][i] + "/" + prefix + "_assembly_report.txt")
-        if status != 0:
-            print("assembly_report failed", end='', flush=True)
+        while if_assembly_report==False:
+            status = os.system("wget -a wget.log -N -P " + assembly_path  + " " +
+                    assembly_summary['ftp_path'][i] + "/" + prefix + "_assembly_report.txt")
+            if status != 0:
+                print(i,"assembly_report failed. Retry", end='', flush=True)
+            else:
+                if_assembly_report=True
 
+    if_fna=False
     if os.path.exists(os.path.join(assembly_path, "%s_genomic.fna.gz"%(prefix))) != True:
-        status = os.system("wget -a wget.log -N -P " + assembly_path + " " +
-                assembly_summary['ftp_path'][i] + "/" + prefix + "_genomic.fna.gz")
-        if status != 0:
-            print("fasta failed", end='', flush=True)
+        while if_fna==False:
+            status = os.system("wget -a wget.log -N -P " + assembly_path + " " +
+                    assembly_summary['ftp_path'][i] + "/" + prefix + "_genomic.fna.gz")
+            if status != 0:
+                print(i,"fasta failed. Retry", end='', flush=True)
+            else:
+                if_fna=True
 
-    if os.path.exists(os.path.join(assembly_path, "md5checksums.txt")) != True:
-        status = os.system("wget -a wget.log -N -P " + assembly_path + " " +
-                assembly_summary['ftp_path'][i] + "/md5checksums.txt")
-        if status != 0:
-            print("checksum failed", end='', flush=True)
+    #if os.path.exists(os.path.join(assembly_path, "md5checksums.txt")) != True:
+    #    status = os.system("wget -a wget.log -N -P " + assembly_path + " " +
+    #            assembly_summary['ftp_path'][i] + "/md5checksums.txt")
+    #    if status != 0:
+    #        print("checksum failed", end='', flush=True)
 
     print("", flush=True)
 
@@ -138,7 +144,7 @@ def download(genome, db_dir):
 
 
 
-    with ThreadPoolExecutor(FLAGS.threads) as exec:
+    with ThreadPoolExecutor(int(FLAGS.threads)) as exec:
         for i in range(assembly_summary.shape[0]):
             exec.submit(download_assembly,i,assembly_summary,genome_dir,genome)
 
