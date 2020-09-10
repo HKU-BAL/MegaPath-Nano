@@ -7,9 +7,8 @@
 The ultra-long ONT sequencing technology benefits metagenomic profiling with high alignment specificity. Yet, its high sequencing error per read remains a hurdle to distinguish among closely related pathogens at lower taxonomic ranks, and for refined drug-level antimicrobial resistance prediction. In this study, we present MegaPath-Nano, successor to the NGS-based MegaPath, an accurate compositional analysis software with drug-level AMR identification for ONT metagenomic sequencing data. MegaPath-Nano takes ONT raw reads as input, and performs  data cleansing, taxonomic profiling, and drug-level AMR detection within a single workflow. The major output of our tool includes 1) a taxonomic profiling report down to strain level with abundance estimated; and 2) an integrated class and drug level AMR report in tabular format with supportive information from different detection tools. As a key feature for taxonomic profiling, MegaPath-Nano performs a global-optimization on multiple alignments and reassigns predictably misplaced reads to a single most likely species. To perform a consistent and comprehensive AMR detection analysis, MegaPath-Nano uses a novel consensus-based approach to detect AMR, incorporating a collection of AMR software and databases. We benchmarked against other state-of-the-art software, including WIMP, Kraken 2, MetaMaps, ARMA and ARGpore using real sequencing data, and we achieved the best performance in both tasks. MegaPath-Nano is therefore a well rounded ONT metagenomic tool for clinical use in practice.
 
 ## Prerequisites
-Tested OS environment: Ubuntu 16.04
 
-## Conda Virtual Environment Setup
+## Option 1: Conda Virtual Environment Setup
 ```
 # prioritize channels
 conda config --add channels defaults
@@ -20,15 +19,19 @@ conda create -n mpn python=3.6
 conda activate mpn
 
 # installing all dependencies for both modules
-conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools cgecore pysam tabulate ncbi-amrfinderplus
-pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick pandarallel
+conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools pysam tabulate cgecore ncbi-amrfinderplus
+pip install -Iv biopython==1.72  #for compatibility until an update of rgi
+pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick seaborn pandarallel
 
-```
-
-## Git clone MegaPath-Nano
-```
+# git clone MegaPath-Nano
 git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano
 cd MegaPath-Nano
+```
+
+## Option 2: Docker
+```
+docker build -f ./Dockerfile -t mpn_image . 
+docker run -it mpn_image /bin/bash
 ```
 
 ## Database Installation
