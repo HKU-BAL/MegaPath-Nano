@@ -17,7 +17,7 @@ class AssemblyMetadata:
         self.assembly_path_by_assembly_id = self.load_assembly_path(assembly_folder=assembly_folder)
         self.tax_id_by_assembly_id, self.assembly_id_by_species_tax_id = self.load_assembly_tax_id(assembly_folder=assembly_folder)
         self.assembly_id_by_sequence_id, self.sequence_id_by_assembly_id = self.load_sequence_summary(assembly_folder=assembly_folder)
-        self.human_noise_bed_path = self.load_human_noise_bed_path(assembly_folder=assembly_folder)
+        #self.human_noise_bed_path = self.load_human_noise_bed_path(assembly_folder=assembly_folder)
 
 
     def get_num_assembly(self):
