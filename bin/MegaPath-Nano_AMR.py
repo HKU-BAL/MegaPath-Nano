@@ -359,18 +359,7 @@ def mergeResults(dir_arr):
                 f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\n" % (key, a_accID[key],a_gene[key],a_score[key]))
 
             
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='MegaPath-Nano: AMR Detection') 
-    parser.add_argument('--query_bam', required=True,help='Input bam')
-    parser.add_argument('--output_folder', required=True,help='Output directory')
-    parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
-    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
-    cwd=os.path.dirname(os.path.realpath(__file__))
-    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser.add_argument('--REFSEQ_PATH', default=nano_dir+'/genomes/refseq/refseq.fna', help='The path of RefSeq')
-    FLAGS = parser.parse_args()
+def main():
     os.makedirs(FLAGS.output_folder,exist_ok=True)
     bam_path = os.path.abspath(FLAGS.query_bam)
     os.chdir(FLAGS.output_folder)
@@ -406,3 +395,15 @@ if __name__ == "__main__":
     else:
         print("Processing results of: {acc_list}".format(acc_list=", ".join(dir_arr)))
         mergeResults(dir_arr)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='MegaPath-Nano: AMR Detection') 
+    parser.add_argument('--query_bam', required=True,help='Input bam')
+    parser.add_argument('--output_folder', required=True,help='Output directory')
+    parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
+    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
+    cwd=os.path.dirname(os.path.realpath(__file__))
+    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(nano_dir), help='The path of RefSeq')
+    FLAGS = parser.parse_args()
+    main()

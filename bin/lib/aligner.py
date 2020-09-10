@@ -436,8 +436,8 @@ if __name__ == '__main__':
     parser.add_argument('--temp_folder', help='temporary folder', default='')
     parser.add_argument('--RAM_folder', help='temporary folder in RAM', default='/run/shm')
 
-    parser.add_argument('--tool_folder', help='Tool folder', default=nano_dir+'/tools')
-    parser.add_argument('--assembly_folder', help='Assembly folder', default=nano_dir+'/genomes')
+    parser.add_argument('--tool_folder', help='Tool folder', default='%s/tools'%(nano_dir))
+    parser.add_argument('--assembly_folder', help='Assembly folder', default='%s/genomes'%(nano_dir))
     parser.add_argument('--aligner', help='Aligner program', default='minimap2')
     parser.add_argument('--aligner_log', help='Log for stderr output from aligner program', default='')
 

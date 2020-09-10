@@ -107,7 +107,7 @@ def humanGenomeSet(assemblySummary, outputFile):
 def plasmidGenomeSet(num, outputFile):
     fileWriter = open(outputFile, 'w') if outputFile is not None else sys.stdout
     for i in range(1, num+1):
-        fileWriter.write("PLA_00000000%d.1"%(i))
+        fileWriter.write("PLA_00000000%d.1\n"%(i))
     if outputFile is not None:
         fileWriter.close()
 
