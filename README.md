@@ -71,7 +71,7 @@ required arguments:
 optional arguments:
   --max_aligner_thread INT    Maximum number of threads used by aligner, default: 64. Actual number of threads is min( available num of cores, threads specified)
   --output_prefix             Output Prefix, default: query file name
-  --output_folder             Output folder, default: ./.
+  --output_folder             Output folder, default: current working directory 
 ```
 
 (2) Run taxonomic analysis module only
