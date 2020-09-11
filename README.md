@@ -71,7 +71,7 @@ required arguments:
 optional arguments:
   --max_aligner_thread INT    Maximum number of threads used by aligner, default: 64. Actual number of threads is min( available num of cores, threads specified)
   --output_prefix             Output Prefix, default: query file name
-  --output_folder             Output folder, default: ./.
+  --output_folder             Output folder, default: current working directory 
 ```
 
 (2) Run taxonomic analysis module only
@@ -116,7 +116,7 @@ The demo data for AMR detection of five patient isolates are available for downl
   
 The experimental validation results of these AMR demo datasets are listed on [Supplementary_info_AMR](docs/Supplementary_info_demo_AMR_data.md).
 
-## Demo script
+## Demo run
 
 ```
 wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/Escherichia_coli_isolate2_HKUBAL_20200103.fastq
