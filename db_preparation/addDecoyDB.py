@@ -8,7 +8,7 @@ FLAGS = None
 def main():
     decoy_name=os.path.basename(os.path.splitext(FLAGS.decoy_fasta))
     path= '%s/refseq/plasmid/%s' %(assembly_dir,decoy_name)
-    copyfile(decoy_name,path)
+    copyfile(FLAGS.decoy_fasta,path)
     with open('%s/plasmid.genome_set' %(FLAGS.config_folder),'a') as config_plasmid:
         config_plasmid.write(decoy_name+'\n')
     assemblyLengthWriter = open('%s/assembly_length' %(FLAGS.assembly_dir), 'a')
