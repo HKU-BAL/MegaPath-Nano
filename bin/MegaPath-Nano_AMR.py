@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import psutil
+from shutil import copyfile
 import sys, getopt, subprocess, os, time, resource
 import pysam
 from concurrent.futures import ThreadPoolExecutor
@@ -33,7 +34,7 @@ def processAccessionNo(acc_id):
     curr_time = time.asctime(time.localtime(time.time()))
     print("Processing accession ID - " + acc_id + " at " + curr_time)
     
-    os.system("cp header.sam sample_{acc_id}.sam".format(acc_id=acc_id))
+    copyfile("header.sam","sample_{acc_id}.sam".format(acc_id=acc_id))
     os.system("samtools view sample.sorted.bam | awk '$3 ~ /{acc_id}/' >> sample_{acc_id}.sam".format(acc_id=acc_id))
     os.system("samtools view -@ {threads} -b sample_{acc_id}.sam > sample_{acc_id}.bam".format(threads=FLAGS.threads,acc_id=acc_id))
     os.system("bedtools bamtobed -i  sample_{acc_id}.bam |bedops -m - > sample_{acc_id}.merged.bed".format(acc_id=acc_id))
