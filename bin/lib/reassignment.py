@@ -110,13 +110,13 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
     mcount_set_list=[]
     mcount_read_id_list=read_id_groupby.size()[read_id_groupby.size()>1].index
 
-    with ThreadPoolExecutor(threads) as exec:
+    with ThreadPoolExecutor(int(threads)) as exec:
         for read_id in mcount_read_id_list:
             species_name_list=read_id_groupby.get_group(read_id)['name'].tolist()
             exec.submit(build_mcount_set_list, species_name_list,mcount_set_list)
     Counter_mcount_set_list=Counter(mcount_set_list)
     i_explains_j_dict={}
-    with ThreadPoolExecutor(threads) as exec:
+    with ThreadPoolExecutor(int(threads)) as exec:
         for species_i in species_list:
             for species_j in species_list:
                 #print(i_explains_j_dict.values())
