@@ -36,14 +36,15 @@ class Blast_amr(resfinder.resfinder.ResFinder):
 
 
         # Write the header for the tab file
-        tab_str = ("Resistance gene\tIdentity\tAlignment Length/Gene Length\t"
+        tab_str_list=[]
+        tab_str_list.append("Resistance gene\tIdentity\tAlignment Length/Gene Length\t"
                    "Coverage\tPosition in reference\tContig\t"
                    "Position in contig\tPhenotype\tAccession no.\n")
 
-        table_str = ""
-        txt_str = ""
-        ref_str = ""
-        hit_str = ""
+        table_str_list = []
+        txt_str_list = []
+        ref_str_list = []
+        hit_str_list = []
 
         # Getting and writing out the results
         titles = dict()
@@ -75,7 +76,7 @@ class Blast_amr(resfinder.resfinder.ResFinder):
 
             profile = str(db)
             if results[db] == "No hit found":
-                table_str += ("%s\n%s\n\n" % (profile, results[db]))
+                table_str_list.append("%s\n%s\n\n" % (profile, results[db]))
             else:
                 titles[db] = "%s" % (profile)
                 headers[db] = ["Resistance gene", "Identity",
@@ -83,8 +84,8 @@ class Blast_amr(resfinder.resfinder.ResFinder):
                                "Position in reference", "Contig",
                                "Position in contig", "Phenotype",
                                "Accession no."]
-                table_str += ("%s\n" % (profile))
-                table_str += ("Resistance gene\tIdentity\t"
+                table_str_list.append("%s\n" % (profile))
+                table_str_list.append("Resistance gene\tIdentity\t"
                               "Alignment Length/Gene Length\tCoverage\t"
                               "Position in reference\tContig\tPosition in contig\t"
                               "Phenotype\tAccession no.\n")
@@ -127,19 +128,19 @@ class Blast_amr(resfinder.resfinder.ResFinder):
                                                         positions_ref, contig_name,
                                                         positions_contig, pheno,
                                                         acc])
-                        tab_str += ("%s\t%s\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
+                        tab_str_list.append("%s\t%s\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
                                     % (gene, ID, HSP, sbjt_length, coverage,
                                        positions_ref, contig_name, positions_contig,
                                        pheno, acc)
                                     )
                     else:
                         # Write tabels
-                        table_str += ("%s\t%.2f\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
+                        table_str_list.append("%s\t%.2f\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
                                       % (gene, ID, HSP, sbjt_length, coverage,
                                          positions_ref, contig_name,
                                          positions_contig, pheno, acc)
                                       )
-                        tab_str += ("%s\t%.2f\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
+                        tab_str_list.append("%s\t%.2f\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
                                     % (gene, ID, HSP, sbjt_length, coverage,
                                        positions_ref, contig_name, positions_contig,
                                        pheno, acc)
@@ -154,9 +155,9 @@ class Blast_amr(resfinder.resfinder.ResFinder):
                     # Writing subjet/ref sequence
                     ref_seq = sbjct_align[db][hit]
 
-                    ref_str += (">%s_%s\n" % (gene, acc))
+                    ref_str_list.append(">%s_%s\n" % (gene, acc))
                     for i in range(0, len(ref_seq), 60):
-                        ref_str += ("%s\n" % (ref_seq[i:i + 60]))
+                        ref_str_list.append("%s\n" % (ref_seq[i:i + 60]))
 
                     # Getting the header and text for the txt file output
                     sbjct_start = results[db][hit]["sbjct_start"]
@@ -167,13 +168,13 @@ class Blast_amr(resfinder.resfinder.ResFinder):
                             "Position: %s" % (gene, ID, HSP, sbjt_length, coverage,
                                               sbjct_start, sbjct_end, contig_name,
                                               positions_contig))
-                    hit_str += (">%s\n" % text)
+                    hit_str_list.append(">%s\n" % text)
 
                     # Writing query/hit sequence
                     hit_seq = query_align[db][hit]
 
                     for i in range(0, len(hit_seq), 60):
-                        hit_str += ("%s\n" % (hit_seq[i:i + 60]))
+                        hit_str_list.append("%s\n" % (hit_seq[i:i + 60]))
 
                     # Saving the output to print the txt result file allignemts
                     txt_file_seq_text[db].append((text, ref_seq,
@@ -201,7 +202,7 @@ class Blast_amr(resfinder.resfinder.ResFinder):
                         positions_contig = (positions_contig + ", "
                                             + split_print[res][i][7])
 
-                    table_str += ("%s\t%s\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
+                    table_str_list.append("%s\t%s\t%s/%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
                                   % (gene, ID, HSP, sbjt_length, coverage,
                                      positions_ref, contig_name, positions_contig,
                                      pheno, acc)
@@ -212,27 +213,33 @@ class Blast_amr(resfinder.resfinder.ResFinder):
                     rows[db].append([gene, ID, hsp_length, coverage, positions_ref,
                                      contig_name, positions_contig, pheno, acc])
 
-                table_str += ("\n")
+                table_str_list.append("\n")
+
 
         # Writing table txt for all hits
         for db in titles:
             # Txt file table
-            table = AMRDetection.text_table(titles[db], headers[db], rows[db])
-            txt_str += table
+            table = Blast_amr.text_table(titles[db], headers[db], rows[db])
+            txt_str_list.append(table)
 
         # Writing alignment txt for all hits
         for db in titles:
             # Txt file alignments
-            txt_str += ("##################### %s #####################\n"
+            txt_str_list.append("##################### %s #####################\n"
                         % (db))
             for text in txt_file_seq_text[db]:
-                txt_str += ("%s\n\n" % (text[0]))
+                txt_str_list.append("%s\n\n" % (text[0]))
                 for i in range(0, len(text[1]), 60):
-                    txt_str += ("%s\n" % (text[1][i:i + 60]))
-                    txt_str += ("%s\n" % (text[2][i:i + 60]))
-                    txt_str += ("%s\n\n" % (text[3][i:i + 60]))
-                txt_str += ("\n")
+                    txt_str_list.append("%s\n" % (text[1][i:i + 60]))
+                    txt_str_list.append("%s\n" % (text[2][i:i + 60]))
+                    txt_str_list.append("%s\n\n" % (text[3][i:i + 60]))
+                txt_str_list.append("\n")
 
+        tab_str=''.join(tab_str_list)
+        table_str=''.join(table_str_list)
+        txt_str=''.join(txt_str_list)
+        ref_str=''.join(ref_str_list)
+        hit_str=''.join(hit_str_list)
         return (tab_str, table_str, txt_str, ref_str, hit_str)
 
 if __name__ == '__main__':
