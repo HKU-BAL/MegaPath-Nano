@@ -1,7 +1,10 @@
 #!/usr/bin/python
 import psutil
 from shutil import copyfile
-import sys, getopt, subprocess, os, time, resource
+import sys
+import getopt
+import subprocess
+import os
 import pysam
 from concurrent.futures import ThreadPoolExecutor
 import argparse 
@@ -31,7 +34,6 @@ def processTaxID(bam_path):
 def processAccessionNo(acc_id):
     """
     """
-    curr_time = time.asctime(time.localtime(time.time()))
     print("Processing accession ID - " + acc_id + " at " + curr_time)
     
     copyfile("header.sam","sample_{acc_id}.sam".format(acc_id=acc_id))
