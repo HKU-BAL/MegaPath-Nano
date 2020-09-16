@@ -33,10 +33,6 @@ def MCount(species_i,species_j,mcount_set_list):
     return Counter(mcount_set_list)[frozenset({species_i,species_j})]
 
 def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ratio,error_rate):
-    #print(i_explains_j_dict.values())
-    #if species_i in i_explains_j_dict.values():
-    #    pass
-    #else:
     AllCount_i=Count(name_groupby_count,species_i)
     UCount_i=Count(unique_alignment_name_groupby_count,species_i)
     UCount_j=Count(unique_alignment_name_groupby_count,species_j)
@@ -119,9 +115,7 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
     with ThreadPoolExecutor(int(threads)) as exec:
         for species_i in species_list:
             for species_j in species_list:
-                #print(i_explains_j_dict.values())
                 if species_i==species_j or species_i in i_explains_j_dict.values():
-                #if species_i==species_j :
                     continue
                 exec.submit(build_i_explains_j_dict, species_i,species_j,name_groupby_count,unique_alignment_name_groupby_count,Counter_mcount_set_list,i_explains_j_dict,ratio,error_rate)
     
@@ -136,7 +130,6 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
     for i in range(iteration):
         print('Iteration:',i)
         align_list=iterate_reassign(align_list,i_explains_j_dict,AS_threshold)
-        #should be no need to update align_list
         if os.path.exists('alignlist_update.csv'):
             update=pd.read_csv('alignlist_update.csv',names=['read_id', 'read_length', 'read_from', 'read_to', 'strand', 'sequence_id', 'sequence_length', 'sequence_from', 'sequence_to','match','alignment_block_length', 'mapq', 'edit_dist', 'alignment_score','assembly_id', 'tax_id', 'species_tax_id', 'genus_tax_id', 'alignment_score_tiebreaker','name','is_in_explain_other'])
             raw_align_list.update(update[~update.index.duplicated(keep='first')])
