@@ -37,13 +37,13 @@ def processAccessionNo(acc_id):
     print("Processing accession ID - " + acc_id + " at " + curr_time)
     
     copyfile("header.sam","sample_{acc_id}.sam".format(acc_id=acc_id))
-    os.system("samtools view sample.sorted.bam | awk '$3 ~ /{acc_id}/' >> sample_{acc_id}.sam".format(acc_id=acc_id))
-    os.system("samtools view -@ {threads} -b sample_{acc_id}.sam > sample_{acc_id}.bam".format(threads=FLAGS.threads,acc_id=acc_id))
-    os.system("bedtools bamtobed -i  sample_{acc_id}.bam |bedops -m - > sample_{acc_id}.merged.bed".format(acc_id=acc_id))
-    os.system("bedops -d ref_{acc_id}.bed sample_{acc_id}.merged.bed > sample_{acc_id}.0cov.bed".format(acc_id=acc_id))
-    os.system("bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv --threads {threads} -o calls_{acc_id}.vcf.gz".format(acc_id=acc_id,threads=FLAGS.threads))
-    os.system("tabix calls_{acc_id}.vcf.gz".format(acc_id=acc_id))
-    os.system("cat ref_{acc_id}.fa | bcftools consensus -m sample_{acc_id}.0cov.bed calls_{acc_id}.vcf.gz > cns_{acc_id}.fa".format(acc_id=acc_id))
+    os.system("samtools view sample.sorted.bam | awk '$3 ~ /{acc_id}/' >> sample_{acc_id}.sam;" 
+    "samtools view -@ {threads} -b sample_{acc_id}.sam > sample_{acc_id}.bam;"
+    "bedtools bamtobed -i  sample_{acc_id}.bam |bedops -m - > sample_{acc_id}.merged.bed;"
+    "bedops -d ref_{acc_id}.bed sample_{acc_id}.merged.bed > sample_{acc_id}.0cov.bed;"
+    "bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv --threads {threads} -o calls_{acc_id}.vcf.gz;"
+    "tabix calls_{acc_id}.vcf.gz;"
+    "cat ref_{acc_id}.fa | bcftools consensus -m sample_{acc_id}.0cov.bed calls_{acc_id}.vcf.gz > cns_{acc_id}.fa".format(acc_id=acc_id,threads=FLAGS.threads))
     os.makedirs("results/{acc_id}".format(acc_id=acc_id), exist_ok=True)
 
     reformat_command = "gawk -F'\\t' 'NR>1 {if($1 in g){if($2>s[$8][$1]){s[$8][$1]=$2}}else {g[$8][$1]=$1; s[$8][$1]=$2};}END {for (i in g) {for (j in g[i]){fg[i]=sprintf(\"%s;%s\", fg[i], g[i][j]);fs[i]=sprintf(\"%s;%s\", fs[i],s[i][j]);}}for (i in g){if(i==\"\"){print \"Unknown \\t \" fg[i] \"\\t\" fs[i]}else {print i \"\\t \" fg[i] \"\\t\" fs[i]}}}'"
@@ -369,18 +369,9 @@ def main():
     print("current directory: " + os.getcwd())
 
     if not os.path.exists("sample.sorted.bam") or not os.path.exists("sample.sorted.bam.bai") or not os.path.exists("header.sam") :
-        p = subprocess.Popen("samtools sort {bam_path} -o sample.sorted.bam".format(bam_path=bam_path), shell=True)
-        p.communicate()
-        p = subprocess.Popen("samtools index sample.sorted.bam", shell=True)
-
-        # make the header for the sam file which will be used for each accession no
-        s = subprocess.Popen("samtools view -@ {threads} -H sample.sorted.bam > header.sam".format(threads=FLAGS.threads), shell=True)
-
-        # make sure the original bam is sorted and indexed and header template is ready
-        p.communicate()
-        print("Original bam file is sorted and indexed")
-        s.communicate()
-        print("Header template for sam files is ready")
+        os.system("samtools sort {bam_path} -o sample.sorted.bam;" 
+                "samtools index sample.sorted.bam;"
+                "samtools view -@ {threads} -H sample.sorted.bam > header.sam".format(bam_path=bam_path,threads=FLAGS.threads))
 
     # make the output directory
     os.makedirs("results",exist_ok=True)
