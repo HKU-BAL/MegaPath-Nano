@@ -2,26 +2,22 @@
 
 import os
 import sqlite3
-import numpy
 import argparse
-import collections
 import tempfile
 import subprocess
 import shlex
 import psutil
 import shutil
 import random
-import datetime
-import math
-import pybedtools
-from pybedtools.bedtool import BedTool      # all bed should have 'chrom' == sequence_id, 'name' == assembly_id
 import atexit
 import time
 import inspect
-
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+import numpy
 import pandas
+import pybedtools
+from pybedtools.bedtool import BedTool      # all bed should have 'chrom' == sequence_id, 'name' == assembly_id
 
 from lib.aligner import Align
 from lib.reassignment import Reassign
