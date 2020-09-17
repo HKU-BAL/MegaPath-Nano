@@ -1,13 +1,14 @@
 #!/usr/bin/python
-import psutil
-from shutil import copyfile
-import sys
-import getopt
-import subprocess
-import os
-import pysam
-from concurrent.futures import ThreadPoolExecutor
 import argparse 
+import os
+import sys
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
+from shutil import copyfile
+import psutil
+import pysam
+
+
 
 FLAGS=None
 def processTaxID(bam_path):
@@ -260,7 +261,7 @@ def mergeResults(dir_arr):
         f.write(
             "Antibiotics Ineffective to Bacteria \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \n")
 
-        for key, value in list(c_accID.items()):
+        for key in c_accID.keys():
             if key not in r_accID and key not in m_accID and key not in cbmar_accID and key not in a_accID:
                 f.write("%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\n" % (
                     key, c_accID[key], c_gene[key], c_score[key]))
@@ -316,7 +317,7 @@ def mergeResults(dir_arr):
                 f.write("%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
                     key,  c_accID[key], c_gene[key], c_score[key],cbmar_accID[key],cbmar_gene[key],cbmar_score[key],a_accID[key],a_gene[key],a_score[key]))
 
-        for key, value in list(r_accID.items()):
+        for key in r_accID.keys():
             if key not in c_accID and key not in m_accID and key not in cbmar_accID and key not in a_accID:
                 f.write("%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n" % (key, r_accID[key], r_gene[key], r_score[key]))
             elif key not in c_accID and key not in m_accID and key not in cbmar_accID and key in a_accID:
@@ -339,7 +340,7 @@ def mergeResults(dir_arr):
             elif key not in c_accID and key not in m_accID and key in cbmar_accID and key in a_accID:
                 f.write("%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, r_accID[key], r_gene[key], r_score[key], cbmar_accID[key],cbmar_gene[key],cbmar_score[key],a_accID[key],a_gene[key],a_score[key]))
 
-        for key, value in list(m_accID.items()):
+        for key in m_accID.keys():
             if key not in c_accID and key not in r_accID and key not in cbmar_accID and key not in a_accID:
                 f.write("%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\n" % (key, m_accID[key], m_gene[key], m_score[key]))
             elif key not in c_accID and key not in r_accID and key not in cbmar_accID and key in a_accID:
@@ -352,12 +353,12 @@ def mergeResults(dir_arr):
                 f.write("%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, m_accID[key], m_gene[key], m_score[key],cbmar_accID[key],cbmar_gene[key],cbmar_score[key],a_accID[key],a_gene[key],a_score[key]))
 
 
-        for key, value in list(cbmar_accID.items()):
+        for key in cbmar_accID.keys():
             if key not in c_accID and key not in r_accID and key not in m_accID and key not in a_accID:
                 f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\n" % (key, cbmar_accID[key],cbmar_gene[key],cbmar_score[key]))
             elif key not in c_accID and key not in r_accID and key not in cbmar_accID and key in a_accID:
                 f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, cbmar_gene[key],cbmar_score[key],a_accID[key],a_gene[key],a_score[key]))
-        for key, value in list(a_accID.items()):
+        for key in a_accID.keys():
             if key not in c_accID and key not in r_accID and key not in m_accID and key not in cbmar_accID:
                 f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\n" % (key, a_accID[key],a_gene[key],a_score[key]))
 
@@ -396,8 +397,8 @@ if __name__ == "__main__":
     parser.add_argument('--output_folder', required=True,help='Output directory')
     parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
     parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
-    cwd=os.path.dirname(os.path.realpath(__file__))
-    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(nano_dir), help='The path of RefSeq')
+    CWD=os.path.dirname(os.path.realpath(__file__))
+    NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(NANO_DIR), help='The path of RefSeq')
     FLAGS = parser.parse_args()
     main()

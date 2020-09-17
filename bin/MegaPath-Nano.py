@@ -3652,6 +3652,14 @@ def step_format_output(megapath_nano, options):
     # for downstream processing 
 
     megapath_nano.best_align_stat.query('adjusted_total_aligned_bp > 0').sort_values(['adjusted_total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.preport', sep='\t', header=True, index=False, columns=align_stat_col_name_dot_report)
+    
+    taxon_df=pandas.read_csv(NANO_DIR+'/db/sequence_name',sep='\t',header=None,names=['sequence_id','name'])
+    taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]))
+    align_list_species_name=megapath_nano.id_best_align_list.merge(right=taxon_df,on=['sequence_id'],how='left')
+    #update name
+    align_list_species_name=pandas.concat([align_list_species_name[align_list_species_name['name'].isnull()].assign(name=lambda x: x['sequence_id']),align_list_species_name[~align_list_species_name['name'].isnull()]])
+    sequence_id_groupby_count=align_list_species_name.groupby(['name']).count()['read_id'].sort_values(ascending=False)
+    sequence_id_groupby_count.to_csv(path_or_buf=file_prefix_with_path +'species_name.read_count',sep='\t')
 
     #testing for sequence id in best_align_stat
     megapath_nano.sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.assembly_list)
@@ -4956,17 +4964,17 @@ if __name__ == '__main__':
     
     
     
-    cwd=os.path.dirname(os.path.realpath(__file__))
-    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    CWD=os.path.dirname(os.path.realpath(__file__))
+    NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser.add_argument('--temp_folder', help='temporary folder', default='')
     parser.add_argument('--RAM_folder', help='temporary folder in RAM', default='/run/shm')
-    parser.add_argument('--taxonomy_db', help='taxonomy database', default='%s/db/ncbi_taxonomy.db'%(nano_dir))
-    parser.add_argument('--tool_folder', help='Tool folder', default='%s/tools'%(cwd))
-    parser.add_argument('--config_folder', help='Config file folder', default='%s/config'%(nano_dir))
-    parser.add_argument('--assembly_folder', help='Assembly folder', default='%s/genomes'%(nano_dir))
+    parser.add_argument('--taxonomy_db', help='taxonomy database', default='%s/db/ncbi_taxonomy.db'%(NANO_DIR))
+    parser.add_argument('--tool_folder', help='Tool folder', default='%s/tools'%(CWD))
+    parser.add_argument('--config_folder', help='Config file folder', default='%s/config'%(NANO_DIR))
+    parser.add_argument('--assembly_folder', help='Assembly folder', default='%s/genomes'%(NANO_DIR))
     parser.add_argument('--aligner', help='Aligner program', default='minimap2')
-    parser.add_argument('--read_simulator', help='Read simulation program', default='%s/tools/nanosim/simulator.py'%(cwd))
-    parser.add_argument('--read_simulation_profiles', help='Read simulation profiles', default='%s/tools/nanosim/nanosim_profiles'%(cwd))
+    parser.add_argument('--read_simulator', help='Read simulation program', default='%s/tools/nanosim/simulator.py'%(CWD))
+    parser.add_argument('--read_simulation_profiles', help='Read simulation profiles', default='%s/tools/nanosim/nanosim_profiles'%(CWD))
     parser.add_argument('--aligner_log', help='Log for stderr output from aligner program', default='minimap2.log')
     parser.add_argument('--read_sim_log', help='Log for stderr output from read simulator', default='read_sim.log')
     parser.add_argument('--adaptor_trimming_log', help='Log for stdout output from adaptor trimming program', default='adaptor_trimming.log')
