@@ -62,7 +62,7 @@ python addDecoyDB.py --decoy_fasta $(fasta)
 ## Basic usage
 (1) Run taxonomic analysis and AMR deteciton module
 ```
-python MegaPath-Nano.py --query ${fq/fa} [options]
+python megapath_nano.py --query ${fq/fa} [options]
 
 required arguments:
   --query
@@ -76,26 +76,26 @@ optional arguments:
 
 (2) Run taxonomic analysis module only
 ```
-python MegaPath-Nano.py --query ${fq/fa} --taxon_module_only [options]
+python megapath_nano.py --query ${fq/fa} --taxon_module_only [options]
 
 ```
 
 (3) Run AMR deteciton module only with **FASTQ/FASTA**
 ```
-python MegaPath-Nano.py --query ${fq/fa} --AMR_module_only [options]
+python megapath_nano.py --query ${fq/fa} --AMR_module_only [options]
 
 ```
 
 (4) Filter FQ/FA only: Adaptor trimming, read filtering and trimming, human or decoy filtering
 ```
-python MegaPath-Nano.py --query ${fq/fa} --filter_fq_only [options]
+python megapath_nano.py --query ${fq/fa} --filter_fq_only [options]
 ```
 For all available options, please check [Usage.md](docs/Usage.md)
 
 
 (5) Run AMR deteciton module only with **BAM**
 ```
-python MegaPath-Nano_AMR.py --query_bam ${bam} --output_folder ${dir} [options]
+python megapath_nano_amr.py --query_bam ${bam} --output_folder ${dir} [options]
 
 required arguments:
   --query_bam QUERY_BAM
@@ -120,5 +120,5 @@ The experimental validation results of these AMR demo datasets are listed on [Su
 
 ```
 wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/Escherichia_coli_isolate2_HKUBAL_20200103.fastq
-python MegaPath-Nano.py --query Escherichia_coli_isolate2_HKUBAL_20200103.fastq
+python megapath_nano.py --query Escherichia_coli_isolate2_HKUBAL_20200103.fastq
 ```
