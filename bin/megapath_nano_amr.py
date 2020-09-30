@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from shutil import copyfile
 import psutil
 import pysam
+import pandas
 
 
 
@@ -42,37 +43,39 @@ def process_accession_num(acc_id):
     "bedops -d ref_{acc_id}.bed sample_{acc_id}.merged.bed > sample_{acc_id}.0cov.bed;"
     "bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv -o calls_{acc_id}.vcf.gz;"
     "tabix calls_{acc_id}.vcf.gz;"
-    "cat ref_{acc_id}.fa | bcftools consensus -m sample_{acc_id}.0cov.bed calls_{acc_id}.vcf.gz > cns_{acc_id}.fa".format(acc_id=acc_id,threads=FLAGS.threads))
+    "cat ref_{acc_id}.fa | bcftools consensus -m sample_{acc_id}.0cov.bed calls_{acc_id}.vcf.gz > cns_{acc_id}.fa".format(acc_id=acc_id))
     os.makedirs("results/{acc_id}".format(acc_id=acc_id), exist_ok=True)
 
     reformat_command = "gawk -F'\\t' 'NR>1 {if($1 in g){if($2>s[$8][$1]){s[$8][$1]=$2}}else {g[$8][$1]=$1; s[$8][$1]=$2};}END {for (i in g) {for (j in g[i]){fg[i]=sprintf(\"%s;%s\", fg[i], g[i][j]);fs[i]=sprintf(\"%s;%s\", fs[i],s[i][j]);}}for (i in g){if(i==\"\"){print \"Unknown \\t \" fg[i] \"\\t\" fs[i]}else {print i \"\\t \" fg[i] \"\\t\" fs[i]}}}'"
 
     os.makedirs("results/{acc_id}/resfinder".format(acc_id=acc_id), exist_ok=True)
-    r_subprocess = subprocess.Popen('python resfinder/resfinder.py -p amr_db/resfinder/ -i cns_{acc_id}.fa -o results/{acc_id}/resfinder -t 0.90 -l 0.60 && ' 
-            '{reformat_command} results/{acc_id}/resfinder/results_tab.txt > results/{acc_id}/resfinder/resf_temp.txt".format(acc_id=acc_id) && ' 
-             "awk -F'\\t' -vOFS=, '{split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}' results/{acc_id}/resfinder/resf_temp.txt >  results/{acc_id}/resfinder/resf_temp2.txt && "  #  separate ", "
-             "awk -F'\\t' -vOFS=, '{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {} else { print a[i]\"\\t\"$2\"\\t\"$3} ;}'  results/{acc_id}/resfinder/resf_temp2.txt >  results/{acc_id}/resfinder/resf.txt".format(acc_id=acc_id,reformat_command=reformat_command), shell=True)  #  separate "and "
+    r_subprocess = subprocess.Popen("python /mnt/bal13/wwlui/dev_wwlui1/resfinder/resfinder.py -p /mnt/bal13/wwlui/dev_wwlui1/resfinder_db/ -i cns_%s.fa -o results/%s/resfinder -t 0.90 -l 0.60 " % (acc_id, acc_id) + ' && ' + \
+    reformat_command + " results/%s/resfinder/results_tab.txt > results/%s/resfinder/resf_temp.txt" % (acc_id, acc_id)+ ' && ' + \
+    "awk -F'\\t' -vOFS=, '{split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}'  results/%s/resfinder/resf_temp.txt >  results/%s/resfinder/resf_temp2.txt" % (acc_id, acc_id)+ ' && ' + \
+    "awk -F'\\t' -vOFS=, '{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {} else { print a[i]\"\\t\"$2\"\\t\"$3} ;}'  results/%s/resfinder/resf_temp2.txt >  results/%s/resfinder/resf.txt" % (acc_id, acc_id), shell=True)
+
+
 
     os.makedirs("results/{acc_id}/card".format(acc_id=acc_id), exist_ok=True)
     c_subprocess = subprocess.Popen('rgi main --input_sequence cns_{acc_id}.fa --output_file results/{acc_id}/card/results --input_type contig -n {threads} && '
-        "awk -F'\t' 'NR>1{print $15 \"|\" $9 \"|\" $10}' results/{acc_id}/card/results.txt > results/{acc_id}/card/card_temp.txt && "
-        "awk -F'|' -vOFS=, '{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){print a[i]\"|\"$2\"|\"$3} else {split(a[i],b,\" \"); print b[1]\"|\"$2\"|\"$3} ;}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt".format(acc_id=acc_id,threads=FLAGS.threads), shell=True)
+        "awk -F'\t' 'NR>1{{print $15 \"|\" $9 \"|\" $10}}' results/{acc_id}/card/results.txt > results/{acc_id}/card/card_temp.txt && "
+        "awk -F'|' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"|\"$2\"|\"$3}} else {{split(a[i],b,\" \"); print b[1]\"|\"$2\"|\"$3}} ;}}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt".format(acc_id=acc_id,threads=FLAGS.threads), shell=True)
 
 
     os.makedirs("results/{acc_id}/amrfinder".format(acc_id=acc_id), exist_ok=True )
     add_flag=''
-    if FLAGS.taxon != '':
+    if FLAGS.taxon != None:
         add_flag='-O '+FLAGS.taxon
     a_subprocess = subprocess.Popen('amrfinder {add_flag} -n cns_{acc_id}.fa > results/{acc_id}/amrfinder/results.txt && ' 
-                "awk -F'\\t' 'NR>1{print $12 \"\\t\" $6 \"\\t\" $17}' results/{acc_id}/amrfinder/results.txt > results/{acc_id}/amrfinder/amrf_temp.txt && " 
-                "awk -F'\\t' -vOFS=, '{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){print a[i]\"\\t\"$2\"\\t\"$3} else {split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3} ;}' results/{acc_id}/amrfinder/amrf_temp.txt > results/{acc_id}/amrfinder/amrf.txt".format(add_flag=add_flag,acc_id=acc_id), shell=True)
+                "awk -F'\\t' 'NR>1{{print $12 \"\\t\" $6 \"\\t\" $17}}' results/{acc_id}/amrfinder/results.txt > results/{acc_id}/amrfinder/amrf_temp.txt && " 
+                "awk -F'\\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/amrfinder/amrf_temp.txt > results/{acc_id}/amrfinder/amrf.txt".format(add_flag=add_flag,acc_id=acc_id), shell=True)
     os.makedirs("results/{acc_id}/megares".format(acc_id=acc_id), exist_ok=True )
-    m_subprocess = subprocess.Popen('python blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/megares/ -d megares_database_v1.01_AMRDetection -p amr_db/megares_db -l 0.9 -t 0.6  && ' 
-            '{reformat_command} results/{acc_id}/megares/results_tab.txt > results/{acc_id}/megares/megares.txt'.format(acc_id=acc_id,reformat_command=reformat_command), shell=True)
+    m_subprocess = subprocess.Popen('python {bin_dir}/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/megares/ -d megares_full_database_v2.00 -p {bin_dir}/amr_db/megares -l 0.9 -t 0.6  && ' 
+            '{reformat_command} results/{acc_id}/megares/results_tab.txt > results/{acc_id}/megares/megares.txt'.format(acc_id=acc_id,reformat_command=reformat_command,bin_dir=FLAGS.NANO_DIR_PATH+"/bin"), shell=True)
 
     os.makedirs("results/{acc_id}/cbmar".format(acc_id=acc_id), exist_ok=True )
-    cbmar_subprocess = subprocess.Popen('python blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/cbmar/ -d cbmar -p amr_db/cbmar -l 0.9 -t 0.6  && ' 
-            '{reformat_command} results/{acc_id}/cbmar/results_tab.txt > results/{acc_id}/cbmar/cbmar.txt'.format(acc_id=acc_id,reformat_command=reformat_command), shell=True)
+    cbmar_subprocess = subprocess.Popen('python {bin_dir}/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/cbmar/ -d cbmar -p {bin_dir}/amr_db/cbmar -l 0.9 -t 0.6  && ' 
+            '{reformat_command} results/{acc_id}/cbmar/results_tab.txt > results/{acc_id}/cbmar/cbmar.txt'.format(acc_id=acc_id,reformat_command=reformat_command,bin_dir=FLAGS.NANO_DIR_PATH+"/bin"), shell=True)
 
     r_subprocess.communicate()
     c_subprocess.communicate()
@@ -109,7 +112,6 @@ def merge_results(dir_arr):
     cbmar_score = {}
 
     for acc_id in dir_arr:
-        acc_id = acc_id[:-1]  #removing slash
 
         card = []
         if os.path.isfile("{acc_id}/card/card.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/card/card.txt".format(acc_id=acc_id)):
@@ -248,117 +250,36 @@ def merge_results(dir_arr):
                 elif amrf_gene[adrug][-1] == "|":
                     amrf_gene[adrug] = amrf_gene[adrug] + col[1]
                     amrf_score[adrug] = amrf_score[adrug] + col[2].strip()
+    
+    df_dict=dict()
+    for antibiotic in set().union(card_acc_id,resf_acc_id,mega_acc_id,cbmar_acc_id,amrf_acc_id):
+        if antibiotic not in df_dict:
+            df_dict[antibiotic]=dict()
+        if antibiotic in card_acc_id:
+            df_dict[antibiotic]['card_acc_id']=card_acc_id[antibiotic]
+            df_dict[antibiotic]['card_gene']=card_gene[antibiotic]
+            df_dict[antibiotic]['card_score']=card_score[antibiotic]
+        if antibiotic in resf_acc_id:
+            df_dict[antibiotic]['resfinder_acc_id']=resf_acc_id[antibiotic]
+            df_dict[antibiotic]['resfinder_gene']=resf_gene[antibiotic]
+            df_dict[antibiotic]['resfinder_score']=resf_score[antibiotic]
+        if antibiotic in mega_acc_id:
+            df_dict[antibiotic]['megares_acc_id']=mega_acc_id[antibiotic]
+            df_dict[antibiotic]['megares_gene']=mega_gene[antibiotic]
+            df_dict[antibiotic]['megares_score']=mega_score[antibiotic]
+        if antibiotic in amrf_acc_id:
+            df_dict[antibiotic]['amrfinder_acc_id']=amrf_acc_id[antibiotic]
+            df_dict[antibiotic]['amrfinder_gene']=amrf_gene[antibiotic]
+            df_dict[antibiotic]['amrfinder_score']=amrf_score[antibiotic]
+        if antibiotic in cbmar_acc_id:
+            df_dict[antibiotic]['cbmar_acc_id']=cbmar_acc_id[antibiotic]
+            df_dict[antibiotic]['cbmar_gene']=cbmar_gene[antibiotic]
+            df_dict[antibiotic]['cbmar_score']=cbmar_score[antibiotic]
+
+    df=pandas.DataFrame(df_dict).T.sort_index(axis=0).reindex(['card_acc_id','card_gene','card_score','amrfinder_acc_id','amrfinder_gene','amrfinder_score','resfinder_acc_id','resfinder_gene','resfinder_score','cbmar_acc_id','cbmar_gene','cbmar_score','megares_acc_id','megares_gene','megares_score'],axis=1)
+    df.to_csv('results.txt')
 
 
-
-    # output results
-    with open("results.txt", "w") as f:
-        f.write(". \t resfinder \t . \t . \t CARD \t . \t . \t megares \t . \t . \t cbmar \t . \t . \t amrfinder \t . \t . \t \n")
-        f.write(
-            "Antibiotics Ineffective to Bacteria \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \t AccessionIDs \t Genes \t IDscore \n")
-
-        for key in card_acc_id:
-            if key not in resf_acc_id and key not in mega_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\n" % (
-                    key, card_acc_id[key], card_gene[key], card_score[key]))
-            elif key not in resf_acc_id and key not in mega_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\n" % (
-                    key,  card_acc_id[key], card_gene[key], card_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key in resf_acc_id and key not in mega_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\n" % (
-                    key, resf_acc_id[key], resf_gene[key], resf_score[key], card_acc_id[key], card_gene[key], card_score[key]))
-            elif key in resf_acc_id and key not in mega_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\n" % (
-                    key,  resf_acc_id[key], resf_gene[key], resf_score[key],card_acc_id[key], card_gene[key], card_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key not in resf_acc_id and key in mega_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\n" % (
-                    key, card_acc_id[key], card_gene[key], card_score[key], mega_acc_id[key], mega_gene[key], mega_score[key]))
-            elif key not in resf_acc_id and key in mega_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\n" % (
-                    key,  card_acc_id[key], card_gene[key], card_score[key],mega_acc_id[key], mega_gene[key], mega_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key in resf_acc_id and key in mega_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\n" % (
-                    key, resf_acc_id[key], resf_gene[key], resf_score[key], card_acc_id[key], card_gene[key], card_score[key], mega_acc_id[key], mega_gene[key], mega_score[key]))
-            elif key in resf_acc_id and key in mega_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\n" % (
-                    key,  resf_acc_id[key], resf_gene[key], resf_score[key],card_acc_id[key], card_gene[key], card_score[key],mega_acc_id[key], mega_gene[key], mega_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key in resf_acc_id and key in mega_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\n" % (
-                    key, resf_acc_id[key], resf_gene[key], resf_score[key], card_acc_id[key], card_gene[key], card_score[key], mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key in resf_acc_id and key in mega_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
-                    key,  resf_acc_id[key], resf_gene[key], resf_score[key],card_acc_id[key], card_gene[key], card_score[key],mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key not in resf_acc_id and key in mega_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\n" % (
-                    key, card_acc_id[key], card_gene[key], card_score[key], mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key not in resf_acc_id and key in mega_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
-                    key,  card_acc_id[key], card_gene[key], card_score[key], mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key in resf_acc_id and key not in mega_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\n" % (
-                    key, resf_acc_id[key], resf_gene[key], resf_score[key], card_acc_id[key], card_gene[key], card_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key in resf_acc_id and key not in mega_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
-                    key,  resf_acc_id[key], resf_gene[key], resf_score[key],card_acc_id[key], card_gene[key], card_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-            elif key not in resf_acc_id and key not in mega_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\n" % (
-                    key,  card_acc_id[key], card_gene[key], card_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key not in resf_acc_id and key not in mega_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
-                    key,  card_acc_id[key], card_gene[key], card_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-        for key in resf_acc_id:
-            if key not in card_acc_id and key not in mega_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key]))
-            elif key not in card_acc_id and key not in mega_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            elif key not in card_acc_id and key in mega_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key], mega_acc_id[key], mega_gene[key], mega_score[key]))
-            elif key not in card_acc_id and key in mega_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key], mega_acc_id[key], mega_gene[key], mega_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-
-            elif key not in card_acc_id and key in mega_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key], mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key not in card_acc_id and key in mega_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key], mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-
-            elif key not in card_acc_id and key not in mega_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key], cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key not in card_acc_id and key not in mega_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, resf_acc_id[key], resf_gene[key], resf_score[key], cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-        for key in mega_acc_id:
-            if key not in card_acc_id and key not in resf_acc_id and key not in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t.\t.\t.\n" % (key, mega_acc_id[key], mega_gene[key], mega_score[key]))
-            elif key not in card_acc_id and key not in resf_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\t%s\n" % (key, mega_acc_id[key], mega_gene[key], mega_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-
-            elif key not in card_acc_id and key not in resf_acc_id and key in cbmar_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t.\t.\t.\n" % (key, mega_acc_id[key], mega_gene[key], mega_score[key], cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key not in card_acc_id and key not in resf_acc_id and key in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, mega_acc_id[key], mega_gene[key], mega_score[key],cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-
-        for key in cbmar_acc_id:
-            if key not in card_acc_id and key not in resf_acc_id and key not in mega_acc_id and key not in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t.\t.\t.\n" % (key, cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key]))
-            elif key not in card_acc_id and key not in resf_acc_id and key not in cbmar_acc_id and key in amrf_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\t%s\t%s\t%s\n" % (key, cbmar_acc_id[key],cbmar_gene[key],cbmar_score[key],amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-        for key in amrf_acc_id:
-            if key not in card_acc_id and key not in resf_acc_id and key not in mega_acc_id and key not in cbmar_acc_id:
-                f.write("%s\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t%s\t%s\t%s\n" % (key, amrf_acc_id[key],amrf_gene[key],amrf_score[key]))
-
-            
 def main():
     os.makedirs(FLAGS.output_folder,exist_ok=True)
     bam_path = os.path.abspath(FLAGS.query_bam)
@@ -373,7 +294,7 @@ def main():
     # make the output directory
     os.makedirs("results",exist_ok=True)
     
-    process_tax_id(bam_path)
+    #process_tax_id(bam_path)
 
     print("All results have been generated")
     os.chdir("results")
@@ -384,7 +305,7 @@ def main():
     except subprocess.CalledProcessError:
         print("No accession ID is mapped with the sequence ID in bam.")
     else:
-        print("Processing results of: {acc_list}".format(acc_list=", ".join(dir_arr)))
+        print("Merging results")
         merge_results(dir_arr)
 
 if __name__ == "__main__":
@@ -392,9 +313,10 @@ if __name__ == "__main__":
     parser.add_argument('--query_bam', required=True,help='Input bam')
     parser.add_argument('--output_folder', required=True,help='Output directory')
     parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
-    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
+    parser.add_argument('--threads', default=int(psutil.cpu_count(logical=True)/2), help='Num of threads')
     CWD=os.path.dirname(os.path.realpath(__file__))
     NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(NANO_DIR), help='The path of RefSeq')
+    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(NANO_DIR), help='The path of RefSeq reference file')
+    parser.add_argument('--NANO_DIR_PATH', default=NANO_DIR, help='The path of root directory of MegaPath-Nano')
     FLAGS = parser.parse_args()
     main()

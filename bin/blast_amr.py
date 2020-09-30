@@ -246,8 +246,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-i", "--inputfile",
                         dest="inputfile",
-                        help="Input file",
-                        default=None)
+                        required=True,
+                        help="Input file",)
     parser.add_argument("-o", "--outputPath",
                         dest="out_path",
                         help="Path to blast output",
@@ -258,8 +258,8 @@ if __name__ == '__main__':
                         default='')
     parser.add_argument("-d", "--databases",
                         dest="databases",
-                        help="Database name without suffix, separated by comma - if none are \
-                              specified all are used. Databases are expected to have fsa suffix",
+                        required=True,
+                        help="Database name without suffix, separated by comma. Databases are expected to have fsa suffix",
                         default=None)
     parser.add_argument("-l", "--min_cov",
                         dest="min_cov",
