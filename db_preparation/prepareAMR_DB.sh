@@ -18,7 +18,7 @@ rgi load --card_json card/card.json
 git clone https://git@bitbucket.org/genomicepidemiology/resfinder_db.git resfinder
 
 mkdir megares
-wget https://megares.meglab.org/download/megares_v2.00/megares_full_database_v2.00.fasta -P megares
+wget https://megares.meglab.org/download/megares_v2.00/megares_full_database_v2.00.fasta -O megares/megares_full_database_v2.00.fsa
 
 mkdir cbmar
 wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/downloadnuc/ -P cbmar
