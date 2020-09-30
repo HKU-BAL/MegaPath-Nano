@@ -37,10 +37,10 @@ def process_accession_num(acc_id):
     
     copyfile("header.sam","sample_{acc_id}.sam".format(acc_id=acc_id))
     os.system("samtools view sample.sorted.bam | awk '$3 ~ /{acc_id}/' >> sample_{acc_id}.sam;" 
-    "samtools view -@ {threads} -b sample_{acc_id}.sam > sample_{acc_id}.bam;"
+    "samtools view -b sample_{acc_id}.sam > sample_{acc_id}.bam;samtools index sample_{acc_id}.bam;"
     "bedtools bamtobed -i  sample_{acc_id}.bam |bedops -m - > sample_{acc_id}.merged.bed;"
     "bedops -d ref_{acc_id}.bed sample_{acc_id}.merged.bed > sample_{acc_id}.0cov.bed;"
-    "bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv --threads {threads} -o calls_{acc_id}.vcf.gz;"
+    "bcftools mpileup -R sample_{acc_id}.merged.bed -Ou -f ref_{acc_id}.fa sample_{acc_id}.bam | bcftools call -Oz -mv -o calls_{acc_id}.vcf.gz;"
     "tabix calls_{acc_id}.vcf.gz;"
     "cat ref_{acc_id}.fa | bcftools consensus -m sample_{acc_id}.0cov.bed calls_{acc_id}.vcf.gz > cns_{acc_id}.fa".format(acc_id=acc_id,threads=FLAGS.threads))
     os.makedirs("results/{acc_id}".format(acc_id=acc_id), exist_ok=True)
