@@ -48,11 +48,11 @@ def process_accession_num(acc_id):
 
     reformat_command = "gawk -F'\\t' 'NR>1 {if($1 in g){if($2>s[$8][$1]){s[$8][$1]=$2}}else {g[$8][$1]=$1; s[$8][$1]=$2};}END {for (i in g) {for (j in g[i]){fg[i]=sprintf(\"%s;%s\", fg[i], g[i][j]);fs[i]=sprintf(\"%s;%s\", fs[i],s[i][j]);}}for (i in g){if(i==\"\"){print \"Unknown \\t \" fg[i] \"\\t\" fs[i]}else {print i \"\\t \" fg[i] \"\\t\" fs[i]}}}'"
 
-    os.makedirs("results/{acc_id}/resfinder".format(acc_id=acc_id), exist_ok=True)
-    r_subprocess = subprocess.Popen("python /mnt/bal13/wwlui/dev_wwlui1/resfinder/resfinder.py -p /mnt/bal13/wwlui/dev_wwlui1/resfinder_db/ -i cns_%s.fa -o results/%s/resfinder -t 0.90 -l 0.60 " % (acc_id, acc_id) + ' && ' + \
-    reformat_command + " results/%s/resfinder/results_tab.txt > results/%s/resfinder/resf_temp.txt" % (acc_id, acc_id)+ ' && ' + \
-    "awk -F'\\t' -vOFS=, '{gsub(\" resistance\", \"\");split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}'  results/%s/resfinder/resf_temp.txt >  results/%s/resfinder/resf_temp2.txt" % (acc_id, acc_id)+ ' && ' + \
-    "awk -F'\\t' -vOFS=, '{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {} else { print a[i]\"\\t\"$2\"\\t\"$3} ;}'  results/%s/resfinder/resf_temp2.txt >  results/%s/resfinder/resf.txt" % (acc_id, acc_id), shell=True)
+    os.makedirs("results/{acc_id}/resf".format(acc_id=acc_id), exist_ok=True)
+    r_subprocess = subprocess.Popen('python resfinder/resfinder.py -p amr_db/resfinder/ -i cns_{acc_id}.fa -o results/{acc_id}/resf -t 0.90 -l 0.60  && '.format(acc_id=acc_id) + \
+    reformat_command + ' results/{acc_id}/resf/results_tab.txt > results/{acc_id}/resf/resf_temp.txt && '.format(acc_id=acc_id) + \
+    "awk -F'\\t' -vOFS=, '{gsub(\" resistance\", \"\");split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}'  results/%s/resf/resf_temp.txt >  results/%s/resf/resf_temp2.txt" % (acc_id, acc_id)+ ' && ' + \
+    "awk -F'\\t' -vOFS=, '{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {} else { print a[i]\"\\t\"$2\"\\t\"$3} ;}'  results/%s/resf/resf_temp2.txt >  results/%s/resf/resf.txt" % (acc_id, acc_id), shell=True)
 
 
 
@@ -62,13 +62,13 @@ def process_accession_num(acc_id):
         "awk -F'\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt".format(acc_id=acc_id,threads=FLAGS.threads), shell=True)
 
 
-    os.makedirs("results/{acc_id}/amrfinder".format(acc_id=acc_id), exist_ok=True )
+    os.makedirs("results/{acc_id}/amrf".format(acc_id=acc_id), exist_ok=True )
     add_flag=''
     if FLAGS.taxon != None:
         add_flag='-O '+FLAGS.taxon
-    a_subprocess = subprocess.Popen('amrfinder {add_flag} -n cns_{acc_id}.fa > results/{acc_id}/amrfinder/results.txt && ' 
-                "awk -F'\\t' 'NR>1{{print $12 \"\\t\" $6 \"\\t\" $17}}' results/{acc_id}/amrfinder/results.txt > results/{acc_id}/amrfinder/amrf_temp.txt && " 
-                "awk -F'\\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/amrfinder/amrf_temp.txt > results/{acc_id}/amrfinder/amrf.txt".format(add_flag=add_flag,acc_id=acc_id), shell=True)
+    a_subprocess = subprocess.Popen('amrfinder {add_flag} -n cns_{acc_id}.fa > results/{acc_id}/amrf/results.txt && ' 
+                "awk -F'\\t' 'NR>1{{print $12 \"\\t\" $6 \"\\t\" $17}}' results/{acc_id}/amrf/results.txt > results/{acc_id}/amrf/amrf_temp.txt && " 
+                "awk -F'\\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/amrf/amrf_temp.txt > results/{acc_id}/amrf/amrf.txt".format(add_flag=add_flag,acc_id=acc_id), shell=True)
     os.makedirs("results/{acc_id}/megares".format(acc_id=acc_id), exist_ok=True )
     m_subprocess = subprocess.Popen('python {bin_dir}/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/megares/ -d megares_full_database_v2.00 -p {bin_dir}/amr_db/megares -l 0.9 -t 0.6  && ' 
             '{reformat_command} results/{acc_id}/megares/results_tab.txt > results/{acc_id}/megares/megares.txt'.format(acc_id=acc_id,reformat_command=reformat_command,bin_dir=FLAGS.NANO_DIR_PATH+"/bin"), shell=True)
@@ -83,6 +83,32 @@ def process_accession_num(acc_id):
     m_subprocess.communicate()
     cbmar_subprocess.communicate()
 
+
+def parse_output(acc_id,db_acc_id,db_gene,db_score,db_name):
+    if os.path.isfile("{acc_id}/{db_name}/{db_name}.txt".format(acc_id=acc_id,db_name=db_name)) and os.path.getsize("{acc_id}/{db_name}/{db_name}.txt".format(acc_id=acc_id,db_name=db_name)):
+        with open("{acc_id}/{db_name}/{db_name}.txt".format(acc_id=acc_id,db_name=db_name)) as f:
+            for line in f:
+                col = line.split("\t")
+                drug=col[0].lower().strip()
+                if drug.endswith('s'):
+                    drug = drug[:-1]
+                if drug not in db_acc_id:
+                    db_acc_id[drug] = acc_id
+                    db_gene[drug] = col[1]
+                    db_score[drug] = col[2].strip()
+                else:
+                    if acc_id not in db_acc_id[drug]:
+                        db_acc_id[drug] = db_acc_id[drug] + "|" + acc_id
+                        db_gene[drug] = db_gene[drug] + "|"
+                        db_score[drug] = db_score[drug] + "|"
+
+                    if col[1].strip() != "":
+                        if db_gene[drug][-1] != "|":
+                            db_gene[drug] = db_gene[drug] + ";" + col[1]
+                            db_score[drug] = db_score[drug] + ";" + col[2].strip()
+                        elif db_gene[drug][-1] == "|":
+                            db_gene[drug] = db_gene[drug] + col[1]
+                            db_score[drug] = db_score[drug] + col[2].strip()
 
 def merge_results(dir_arr):
     #TODO threading
@@ -111,166 +137,9 @@ def merge_results(dir_arr):
     cbmar_gene = {}
     cbmar_score = {}
 
-    def parse_output(acc_id,db_acc_id,db_gene,db_score):
-        if os.path.isfile("{acc_id}/card/card.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/card/card.txt".format(acc_id=acc_id)):
-            with open("{acc_id}/card/card.txt".format(acc_id=acc_id)) as f:
-                for line in f:
-                    col = line.split("\t")
-                    drug=col[0].lower().strip()
-                    if drug.endswith('s'):
-                        drug = drug[:-1]
-                    if drug not in db_acc_id:
-                        db_acc_id[drug] = acc_id
-                        db_gene[drug] = col[1]
-                        db_score[drug] = col[2].strip()
-                    else:
-                        if acc_id not in db_acc_id[mdrug]:
-                            db_acc_id[mdrug] = db_acc_id[mdrug] + "|" + acc_id
-                            db_gene[mdrug] = db_gene[mdrug] + "|"
-                            db_score[mdrug] = db_score[mdrug] + "|"
-
-                        if col[1].strip() != "":
-                            if db_gene[mdrug][-1] != "|":
-                                db_gene[mdrug] = db_gene[mdrug] + ";" + col[1]
-                                db_score[mdrug] = db_score[mdrug] + ";" + col[2].strip()
-                            elif db_gene[mdrug][-1] == "|":
-                                db_gene[mdrug] = db_gene[mdrug] + col[1]
-                                db_score[mdrug] = db_score[mdrug] + col[2].strip()
-
-
     for acc_id in dir_arr:
-        for db_data in ((card_acc_id,card_gene,card_score),(resf_acc_id,resf_gene,resf_score),(amrf_acc_id,amrf_gene,amrf_score),(mega_acc_id,mega_gene,mega_score),(cbmar_acc_id,cbmar_gene,cbmar_score)):
+        for db_data in ((card_acc_id,card_gene,card_score,'card'),(resf_acc_id,resf_gene,resf_score,'resf'),(amrf_acc_id,amrf_gene,amrf_score,'amrf'),(mega_acc_id,mega_gene,mega_score,'mega'),(cbmar_acc_id,cbmar_gene,cbmar_score,'cbmar')):
             parse_output(acc_id,*db_data)
-        """
-        if os.path.isfile("{acc_id}/card/card.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/card/card.txt".format(acc_id=acc_id)):
-            card = subprocess.check_output("cat {acc_id}/card/card.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
-
-        for rec in card:
-            
-            #col = rec.split("\t")
-            col = rec.split("\t")
-            cdrug = col[0].strip()
-            if cdrug not in card_acc_id:
-                card_acc_id[cdrug] = acc_id
-                card_gene[cdrug] = col[1]
-                card_score[cdrug] = col[2]
-            else:
-                if acc_id not in card_acc_id[cdrug]:
-                    card_acc_id[cdrug] = card_acc_id[cdrug] + "|" + acc_id
-                    card_gene[cdrug] = card_gene[cdrug] + "|"
-                    card_score[cdrug] = card_score[cdrug] + "|"
-                if card_gene[cdrug][-1] != "|":
-                    card_gene[cdrug] = card_gene[cdrug] + ";" + col[1]
-                    card_score[cdrug] = card_score[cdrug] + ";" + col[2]
-                elif card_gene[cdrug][-1] == "|":
-                    card_gene[cdrug] = card_gene[cdrug] + col[1]
-                    card_score[cdrug] = card_score[cdrug] + col[2]
-
-        if os.path.isfile("{acc_id}/resfinder/resf.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/resfinder/resf.txt".format(acc_id=acc_id)):
-            resf = subprocess.check_output("cat {acc_id}/resfinder/resf.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
-        for rec in resf:
-            
-            col = rec.split("\t")
-            rdrug = col[0].lower().strip()
-            if rdrug.endswith('s'):
-                rdrug = rdrug[:-1]
-            # merge drugs if multiple entries
-            if rdrug not in resf_acc_id:
-                resf_acc_id[rdrug] = acc_id
-                resf_gene[rdrug] = col[1]
-                resf_score[rdrug] = col[2]
-            else:
-                if acc_id not in resf_acc_id[rdrug]:
-                    resf_acc_id[rdrug] = resf_acc_id[rdrug] + "|" + acc_id
-                    resf_gene[rdrug] = resf_gene[rdrug] + "|"
-                    resf_score[rdrug] = resf_score[rdrug] + "|"
-
-                if col[1].strip() != "":
-                    if resf_gene[rdrug][-1] != "|":
-                        resf_gene[rdrug] = resf_gene[rdrug] + ";" + col[1]
-                        resf_score[rdrug] = resf_score[rdrug] + ";" + col[2]
-                    elif resf_gene[rdrug][-1] == "|":
-                        resf_gene[rdrug] = resf_gene[rdrug] + col[1]
-                        resf_score[rdrug] = resf_score[rdrug] + col[2]
-
-        if os.path.isfile("{acc_id}/megares/megares.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/megares/megares.txt".format(acc_id=acc_id)):
-            mega = subprocess.check_output("cat {acc_id}/megares/megares.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
-        for rec in mega:
-            
-            col = rec.split("\t")
-            mdrug = col[0].lower().strip()
-            if mdrug.endswith('s'):
-                mdrug = mdrug[:-1]
-            # merge drugs if multiple entries
-            if mdrug not in mega_acc_id:
-                mega_acc_id[mdrug] = acc_id
-                mega_gene[mdrug] = col[1]
-                mega_score[mdrug] = col[2].strip()
-            else:
-                if acc_id not in mega_acc_id[mdrug]:
-                    mega_acc_id[mdrug] = mega_acc_id[mdrug] + "|" + acc_id
-                    mega_gene[mdrug] = mega_gene[mdrug] + "|"
-                    mega_score[mdrug] = mega_score[mdrug] + "|"
-
-                if col[1].strip() != "":
-                    if mega_gene[mdrug][-1] != "|":
-                        mega_gene[mdrug] = mega_gene[mdrug] + ";" + col[1]
-                        mega_score[mdrug] = mega_score[mdrug] + ";" + col[2].strip()
-                    elif mega_gene[mdrug][-1] == "|":
-                        mega_gene[mdrug] = mega_gene[mdrug] + col[1]
-                        mega_score[mdrug] = mega_score[mdrug] + col[2].strip()
-        
-        if os.path.isfile("{acc_id}/cbmar/cbmar.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/cbmar/cbmar.txt".format(acc_id=acc_id)):
-            cbmar = subprocess.check_output("cat {acc_id}/cbmar/cbmar.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
-        for rec in cbmar:
-            
-            col = rec.split("\t")
-            cbmardrug = col[0].lower().strip()
-            if cbmardrug.endswith('s'):
-                cbmardrug = cbmardrug[:-1]
-            # merge drugs if multiple entries
-            if cbmardrug not in cbmar_acc_id:
-                cbmar_acc_id[cbmardrug] = acc_id
-                cbmar_gene[cbmardrug] = col[1]
-                cbmar_score[cbmardrug] = col[2].strip()
-            else:
-                if acc_id not in cbmar_acc_id[cbmardrug]:
-                    cbmar_acc_id[cbmardrug] = cbmar_acc_id[cbmardrug] + "|" + acc_id
-                    cbmar_gene[cbmardrug] = cbmar_gene[cbmardrug] + "|"
-                    cbmar_score[cbmardrug] = cbmar_score[cbmardrug] + "|"
-
-                if col[1].strip() != "":
-                    if cbmar_gene[cbmardrug][-1] != "|":
-                        cbmar_gene[cbmardrug] = cbmar_gene[cbmardrug] + ";" + col[1]
-                        cbmar_score[cbmardrug] = cbmar_score[cbmardrug] + ";" + col[2].strip()
-                    elif cbmar_gene[cbmardrug][-1] == "|":
-                        cbmar_gene[cbmardrug] = cbmar_gene[cbmardrug] + col[1]
-                        cbmar_score[cbmardrug] = cbmar_score[cbmardrug] + col[2].strip()
-
-
-
-        if os.path.isfile("{acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id)):
-            amrf = subprocess.check_output("cat {acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
-        for rec in amrf:
-            
-            col = rec.split("\t")
-            adrug = col[0].strip().lower()
-            if adrug not in amrf_acc_id:
-                amrf_acc_id[adrug] = acc_id
-                amrf_gene[adrug] = col[1]
-                amrf_score[adrug] = col[2].strip()
-            else:
-                if acc_id not in amrf_acc_id[adrug]:
-                    amrf_acc_id[adrug] = amrf_acc_id[adrug] + "|" + acc_id
-                    amrf_gene[adrug] = amrf_gene[adrug] + "|"
-                    amrf_score[adrug] = amrf_score[adrug] + "|"
-                if amrf_gene[adrug][-1] != "|":
-                    amrf_gene[adrug] = amrf_gene[adrug] + ";" + col[1]
-                    amrf_score[adrug] = amrf_score[adrug] + ";" + col[2].strip()
-                elif amrf_gene[adrug][-1] == "|":
-                    amrf_gene[adrug] = amrf_gene[adrug] + col[1]
-                    amrf_score[adrug] = amrf_score[adrug] + col[2].strip()
-        """
     
     df_dict=dict()
     for antibiotic in set().union(card_acc_id,resf_acc_id,mega_acc_id,cbmar_acc_id,amrf_acc_id):
@@ -336,7 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('--threads', default=int(psutil.cpu_count(logical=True)/2), help='Num of threads')
     CWD=os.path.dirname(os.path.realpath(__file__))
     NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(NANO_DIR), help='The path of RefSeq reference file')
+    parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(NANO_DIR), help='The path of reference files. RefSeq by default')
     parser.add_argument('--NANO_DIR_PATH', default=NANO_DIR, help='The path of root directory of MegaPath-Nano')
     FLAGS = parser.parse_args()
     main()
