@@ -51,15 +51,15 @@ def process_accession_num(acc_id):
     os.makedirs("results/{acc_id}/resfinder".format(acc_id=acc_id), exist_ok=True)
     r_subprocess = subprocess.Popen("python /mnt/bal13/wwlui/dev_wwlui1/resfinder/resfinder.py -p /mnt/bal13/wwlui/dev_wwlui1/resfinder_db/ -i cns_%s.fa -o results/%s/resfinder -t 0.90 -l 0.60 " % (acc_id, acc_id) + ' && ' + \
     reformat_command + " results/%s/resfinder/results_tab.txt > results/%s/resfinder/resf_temp.txt" % (acc_id, acc_id)+ ' && ' + \
-    "awk -F'\\t' -vOFS=, '{split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}'  results/%s/resfinder/resf_temp.txt >  results/%s/resfinder/resf_temp2.txt" % (acc_id, acc_id)+ ' && ' + \
+    "awk -F'\\t' -vOFS=, '{gsub(\" resistance\", \"\");split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}'  results/%s/resfinder/resf_temp.txt >  results/%s/resfinder/resf_temp2.txt" % (acc_id, acc_id)+ ' && ' + \
     "awk -F'\\t' -vOFS=, '{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {} else { print a[i]\"\\t\"$2\"\\t\"$3} ;}'  results/%s/resfinder/resf_temp2.txt >  results/%s/resfinder/resf.txt" % (acc_id, acc_id), shell=True)
 
 
 
     os.makedirs("results/{acc_id}/card".format(acc_id=acc_id), exist_ok=True)
     c_subprocess = subprocess.Popen('rgi main --input_sequence cns_{acc_id}.fa --output_file results/{acc_id}/card/results --input_type contig -n {threads} && '
-        "awk -F'\t' 'NR>1{{print $15 \"|\" $9 \"|\" $10}}' results/{acc_id}/card/results.txt > results/{acc_id}/card/card_temp.txt && "
-        "awk -F'|' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"|\"$2\"|\"$3}} else {{split(a[i],b,\" \"); print b[1]\"|\"$2\"|\"$3}} ;}}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt".format(acc_id=acc_id,threads=FLAGS.threads), shell=True)
+        "awk -F'\t' 'NR>1{{print $15 \"\\t\" $9 \"\\t\" $10}}' results/{acc_id}/card/results.txt > results/{acc_id}/card/card_temp.txt && "
+        "awk -F'\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt".format(acc_id=acc_id,threads=FLAGS.threads), shell=True)
 
 
     os.makedirs("results/{acc_id}/amrfinder".format(acc_id=acc_id), exist_ok=True )
@@ -111,16 +111,44 @@ def merge_results(dir_arr):
     cbmar_gene = {}
     cbmar_score = {}
 
-    for acc_id in dir_arr:
+    def parse_output(acc_id,db_acc_id,db_gene,db_score):
+        if os.path.isfile("{acc_id}/card/card.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/card/card.txt".format(acc_id=acc_id)):
+            with open("{acc_id}/card/card.txt".format(acc_id=acc_id)) as f:
+                for line in f:
+                    col = line.split("\t")
+                    drug=col[0].lower().strip()
+                    if drug.endswith('s'):
+                        drug = drug[:-1]
+                    if drug not in db_acc_id:
+                        db_acc_id[drug] = acc_id
+                        db_gene[drug] = col[1]
+                        db_score[drug] = col[2].strip()
+                    else:
+                        if acc_id not in db_acc_id[mdrug]:
+                            db_acc_id[mdrug] = db_acc_id[mdrug] + "|" + acc_id
+                            db_gene[mdrug] = db_gene[mdrug] + "|"
+                            db_score[mdrug] = db_score[mdrug] + "|"
 
-        card = []
+                        if col[1].strip() != "":
+                            if db_gene[mdrug][-1] != "|":
+                                db_gene[mdrug] = db_gene[mdrug] + ";" + col[1]
+                                db_score[mdrug] = db_score[mdrug] + ";" + col[2].strip()
+                            elif db_gene[mdrug][-1] == "|":
+                                db_gene[mdrug] = db_gene[mdrug] + col[1]
+                                db_score[mdrug] = db_score[mdrug] + col[2].strip()
+
+
+    for acc_id in dir_arr:
+        for db_data in ((card_acc_id,card_gene,card_score),(resf_acc_id,resf_gene,resf_score),(amrf_acc_id,amrf_gene,amrf_score),(mega_acc_id,mega_gene,mega_score),(cbmar_acc_id,cbmar_gene,cbmar_score)):
+            parse_output(acc_id,*db_data)
+        """
         if os.path.isfile("{acc_id}/card/card.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/card/card.txt".format(acc_id=acc_id)):
             card = subprocess.check_output("cat {acc_id}/card/card.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
 
         for rec in card:
             
             #col = rec.split("\t")
-            col = rec.split("|")
+            col = rec.split("\t")
             cdrug = col[0].strip()
             if cdrug not in card_acc_id:
                 card_acc_id[cdrug] = acc_id
@@ -138,15 +166,12 @@ def merge_results(dir_arr):
                     card_gene[cdrug] = card_gene[cdrug] + col[1]
                     card_score[cdrug] = card_score[cdrug] + col[2]
 
-        resf = []
         if os.path.isfile("{acc_id}/resfinder/resf.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/resfinder/resf.txt".format(acc_id=acc_id)):
             resf = subprocess.check_output("cat {acc_id}/resfinder/resf.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
         for rec in resf:
             
             col = rec.split("\t")
-            rdrug_arr = col[0].split(" resistance")
-            rdrug = rdrug_arr[0]
-            rdrug = rdrug.lower().strip()
+            rdrug = col[0].lower().strip()
             if rdrug.endswith('s'):
                 rdrug = rdrug[:-1]
             # merge drugs if multiple entries
@@ -167,14 +192,13 @@ def merge_results(dir_arr):
                     elif resf_gene[rdrug][-1] == "|":
                         resf_gene[rdrug] = resf_gene[rdrug] + col[1]
                         resf_score[rdrug] = resf_score[rdrug] + col[2]
-        mega=[]
+
         if os.path.isfile("{acc_id}/megares/megares.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/megares/megares.txt".format(acc_id=acc_id)):
             mega = subprocess.check_output("cat {acc_id}/megares/megares.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
         for rec in mega:
             
             col = rec.split("\t")
-            mdrug = col[0]
-            mdrug = mdrug.lower().strip()
+            mdrug = col[0].lower().strip()
             if mdrug.endswith('s'):
                 mdrug = mdrug[:-1]
             # merge drugs if multiple entries
@@ -196,14 +220,12 @@ def merge_results(dir_arr):
                         mega_gene[mdrug] = mega_gene[mdrug] + col[1]
                         mega_score[mdrug] = mega_score[mdrug] + col[2].strip()
         
-        cbmar=[]
         if os.path.isfile("{acc_id}/cbmar/cbmar.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/cbmar/cbmar.txt".format(acc_id=acc_id)):
             cbmar = subprocess.check_output("cat {acc_id}/cbmar/cbmar.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
         for rec in cbmar:
             
             col = rec.split("\t")
-            cbmardrug = col[0]
-            cbmardrug = cbmardrug.lower().strip()
+            cbmardrug = col[0].lower().strip()
             if cbmardrug.endswith('s'):
                 cbmardrug = cbmardrug[:-1]
             # merge drugs if multiple entries
@@ -227,8 +249,6 @@ def merge_results(dir_arr):
 
 
 
-        # merge the amrfinder results:
-        amrf = []
         if os.path.isfile("{acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id)) and os.path.getsize("{acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id)):
             amrf = subprocess.check_output("cat {acc_id}/amrfinder/amrf.txt".format(acc_id=acc_id),encoding='utf-8', shell=True).strip().split("\n")
         for rec in amrf:
@@ -250,6 +270,7 @@ def merge_results(dir_arr):
                 elif amrf_gene[adrug][-1] == "|":
                     amrf_gene[adrug] = amrf_gene[adrug] + col[1]
                     amrf_score[adrug] = amrf_score[adrug] + col[2].strip()
+        """
     
     df_dict=dict()
     for antibiotic in set().union(card_acc_id,resf_acc_id,mega_acc_id,cbmar_acc_id,amrf_acc_id):
@@ -291,10 +312,9 @@ def main():
                 "samtools index sample.sorted.bam;"
                 "samtools view -@ {threads} -H sample.sorted.bam > header.sam".format(bam_path=bam_path,threads=FLAGS.threads))
 
-    # make the output directory
     os.makedirs("results",exist_ok=True)
     
-    #process_tax_id(bam_path)
+    process_tax_id(bam_path)
 
     print("All results have been generated")
     os.chdir("results")
