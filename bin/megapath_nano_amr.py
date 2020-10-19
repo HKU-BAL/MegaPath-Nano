@@ -74,14 +74,18 @@ def process_accession_num(acc_id):
             '{reformat_command} results/{acc_id}/megares/results_tab.txt > results/{acc_id}/megares/megares.txt'.format(acc_id=acc_id,reformat_command=reformat_command,bin_dir=FLAGS.NANO_DIR_PATH+"/bin"), shell=True)
 
     os.makedirs("results/{acc_id}/cbmar".format(acc_id=acc_id), exist_ok=True )
-    cbmar_subprocess = subprocess.Popen('python {bin_dir}/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/cbmar/ -d cbmar -p {bin_dir}/amr_db/cbmar -l 0.9 -t 0.6  && ' 
+    cbmar_nucl_subprocess = subprocess.Popen('python {bin_dir}/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/cbmar/ -d cbmar_nucl -p {bin_dir}/amr_db/cbmar -l 0.9 -t 0.6  && ' 
             '{reformat_command} results/{acc_id}/cbmar/results_tab.txt > results/{acc_id}/cbmar/cbmar.txt'.format(acc_id=acc_id,reformat_command=reformat_command,bin_dir=FLAGS.NANO_DIR_PATH+"/bin"), shell=True)
+    cbmar_prot_subprocess = subprocess.Popen('prodigal -m -a cns_{acc_id}.prot.fa -i cns_{acc_id}.fa && '
+            'blastp -query cns_{acc_id}.prot.fa -out cns_{acc_id}.prot.fa.blast.txt -db {CBMAR_PROT_DB_PATH} -outfmt "6 qseqid sseqid pident qcovs"'.format(acc_id=acc_id,CBMAR_PROT_DB_PATH=FLAGS.CBMAR_PROT_DB_PATH), shell=True)
 
     r_subprocess.communicate()
     c_subprocess.communicate()
     a_subprocess.communicate()
     m_subprocess.communicate()
-    cbmar_subprocess.communicate()
+    cbmar_nucl_subprocess.communicate()
+    #  TODO separate protein subprocess
+    cbmar_prot_subprocess.communicate()
 
 
 def parse_output(acc_id,db_acc_id,db_gene,db_score,db_name):
@@ -169,6 +173,22 @@ def merge_results(dir_arr):
     df=pandas.DataFrame(df_dict).T.sort_index(axis=0).reindex(['card_acc_id','card_gene','card_score','amrfinder_acc_id','amrfinder_gene','amrfinder_score','resfinder_acc_id','resfinder_gene','resfinder_score','cbmar_acc_id','cbmar_gene','cbmar_score','megares_acc_id','megares_gene','megares_score'],axis=1)
     df.to_csv('results.txt')
 
+    #  output cbmar protein results
+    family_details_df=pandas.read_csv(FLAGS.FAMILY_DETAILS_PATH,encoding = "utf-8")
+    drug_set=set()
+    for f in glob.glob('%s/cns*fa.prot.fa.blast.txt' %FLAGS.output_folder):
+        if os.path.getsize(f)>0:
+            df = pandas.read_csv(f,sep='\t',header=None)
+            df[2]=df[2].astype(int)
+            df[3]=df[3].astype(int)
+            df=df[(df[2]>=FLAGS.pident_cbmar) & (df[3]>=FLAGS.qcovs_cbmar)]
+            for index, row in family_details_df.iterrows():
+                if df[1].str.contains(row['Uniprot ID']).any():
+                    drug_set.add(row['Hydrolytic profile'])
+    with open('cbmar_protein_blasted_hydrolytic_profile.txt','w') as fo:
+        for drug in drug_set:
+            fo.write(str(drug)+'\n')
+
 
 def main():
     os.makedirs(FLAGS.output_folder,exist_ok=True)
@@ -203,9 +223,13 @@ if __name__ == "__main__":
     parser.add_argument('--output_folder', required=True,help='Output directory')
     parser.add_argument('--taxon', help='Taxon-specific options for AMRFinder, curated organisms: Campylobacter, Enterococcus_faecalis, Enterococcus_faecium, Escherichia, Klebsiella, Salmonella, Staphylococcus_aureus, Staphylococcus_pseudintermedius, Vibrio_cholerae')
     parser.add_argument('--threads', default=int(psutil.cpu_count(logical=True)/2), help='Num of threads')
+    parser.add_argument('--pident_cbmar', default=90, help='The threshold of percentage of identical matches in blastp')
+    parser.add_argument('--qcovs_cbmar', default=60, help='The threshold of percentage of query coverage in blastp')
     CWD=os.path.dirname(os.path.realpath(__file__))
     NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser.add_argument('--REFSEQ_PATH', default='%s/genomes/refseq/refseq.fna'%(NANO_DIR), help='The path of reference files. RefSeq by default')
     parser.add_argument('--NANO_DIR_PATH', default=NANO_DIR, help='The path of root directory of MegaPath-Nano')
+    parser.add_argument('--CBMAR_PROT_DB_PATH', default='%s/bin/amr_db/cbmar/cbmar_prot.fsa'%(NANO_DIR), help='The path of betalactamase family details in protein, collected from http://proteininformatics.org/mkumar/lactamasedb/cllasification.html.')
+    parser.add_argument('--FAMILY_DETAILS_PATH', default='%s/bin/amr_db/cbmar/family_details.csv'%(NANO_DIR), help='The path of betalactamase family details in protein, collected from http://proteininformatics.org/mkumar/lactamasedb/cllasification.html.')
     FLAGS = parser.parse_args()
     main()

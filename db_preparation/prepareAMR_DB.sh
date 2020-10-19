@@ -22,7 +22,10 @@ wget https://megares.meglab.org/download/megares_v2.00/megares_full_database_v2.
 
 mkdir cbmar
 wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/downloadnuc/ -P cbmar
-cat cbmar/* > cbmar/cbmar.fsa && rm -f cbmar/*.fasta
+cat cbmar/*tide.fasta > cbmar/cbmar_nucl.fsa && rm -f cbmar/*tide.fasta
+wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/download_protein/ -P cbmar
+cat cbmar/*.fasta > cbmar/cbmar_prot.fsa && rm -f cbmar/*.fasta
+makeblastdb -in cbmar_prot.fsa   -title "cbmar_prot" -dbtype prot
 
 #download AMRFinder database
 amrfinder -u
