@@ -7,7 +7,6 @@ cd ${ROOT_PATH}/bin
 #TODO update to 4.0
 git clone -b 3.2.1 https://git@bitbucket.org/genomicepidemiology/resfinder.git
 
-mkdir amr_db
 cd amr_db
 
 mkdir card
@@ -20,7 +19,6 @@ git clone https://git@bitbucket.org/genomicepidemiology/resfinder_db.git resfind
 mkdir megares
 wget https://megares.meglab.org/download/megares_v2.00/megares_full_database_v2.00.fasta -O megares/megares_full_database_v2.00.fsa
 
-mkdir cbmar
 wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/downloadnuc/ -P cbmar
 cat cbmar/*tide.fasta > cbmar/cbmar_nucl.fsa && rm -f cbmar/*tide.fasta
 wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/download_protein/ -P cbmar
