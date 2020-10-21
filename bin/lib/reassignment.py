@@ -83,9 +83,8 @@ def iterate_reassign(align_list,i_explains_j_dict,AS_threshold):
 FLAGS=None
 def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_threshold=0):
     #TODO iterate groupby and explainlist
-    #TODO generate
-    TAXON_FILE="/mnt/bal13/wwlui/Nanopath_TB/db_new_refseq.sequence_name.first_two_words"
-    taxon_df=pd.read_csv(TAXON_FILE,sep='\t',header=None,names=['sequence_id','name'])
+    taxon_df=pd.read_csv('%s/sequence_name' %FLAGS.db_folder, sep='\t',header=None,names=['sequence_id','name'])
+    taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]))
     align_list=align_list.merge(right=taxon_df,on=['sequence_id'],how='inner')
 
     raw_align_list=align_list
@@ -144,6 +143,7 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
 
 
 if __name__ == '__main__': 
+    NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     parser = argparse.ArgumentParser(description='MegaPath-Nano: Reassignment')
     parser.add_argument('--align_list', required=True,help='Input align list')
     parser.add_argument('--AS_threshold', default=0.0, help='Percentage of AS required for an alignment to be reassigned to another species from the original species')
@@ -151,6 +151,7 @@ if __name__ == '__main__':
     parser.add_argument('--error_rate', default=0.05, help='Allowed error rate')
     parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
     parser.add_argument('--iteration', default=1, help='Num of iterations')
+    parser.add_argument('--db_folder', default='%s/db'%(NANO_DIR), help='Db folder')
     FLAGS = parser.parse_args()
     align_list=pd.read_csv(FLAGS.align_list, index_col =0)
     Reassign(align_list,iteration=FLAGS.iteration,error_rate=FLAGS.error_rate,ratio=FLAGS.ratio,threads=FLAGS.threads,AS_threshold=FLAGS.AS_threshold)

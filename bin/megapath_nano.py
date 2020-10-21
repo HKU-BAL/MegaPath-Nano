@@ -3649,7 +3649,7 @@ def step_format_output(megapath_nano, options):
 
     megapath_nano.best_align_stat.query('adjusted_total_aligned_bp > 0').sort_values(['adjusted_total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.preport', sep='\t', header=True, index=False, columns=align_stat_col_name_dot_report)
     
-    taxon_df=pandas.read_csv(NANO_DIR+'/db/sequence_name',sep='\t',header=None,names=['sequence_id','name'])
+    taxon_df=pandas.read_csv('%s/sequence_name' %(megapath_nano.global_options['db_folder']),sep='\t',header=None,names=['sequence_id','name'])
     taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]))
     align_list_species_name=megapath_nano.id_best_align_list.merge(right=taxon_df,on=['sequence_id'],how='left')
     #update name
@@ -3895,6 +3895,7 @@ def main():
                                'tool_folder':FLAGS.tool_folder,
                                'config_folder':FLAGS.config_folder,
                                'assembly_folder':FLAGS.assembly_folder,
+                               'db_folder':FLAGS.db_folder,
                                'aligner':FLAGS.aligner,
                                'aligner_log':FLAGS.aligner_log,
                                'read_sim_log':FLAGS.read_sim_log,
@@ -4968,6 +4969,7 @@ if __name__ == '__main__':
     parser.add_argument('--tool_folder', help='Tool folder', default='%s/tools'%(CWD))
     parser.add_argument('--config_folder', help='Config file folder', default='%s/config'%(NANO_DIR))
     parser.add_argument('--assembly_folder', help='Assembly folder', default='%s/genomes'%(NANO_DIR))
+    parser.add_argument('--db_folder', help='Db folder', default='%s/db'%(NANO_DIR))
     parser.add_argument('--aligner', help='Aligner program', default='minimap2')
     parser.add_argument('--read_simulator', help='Read simulation program', default='%s/tools/nanosim/simulator.py'%(CWD))
     parser.add_argument('--read_simulation_profiles', help='Read simulation profiles', default='%s/tools/nanosim/nanosim_profiles'%(CWD))

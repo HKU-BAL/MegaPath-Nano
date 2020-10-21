@@ -328,7 +328,7 @@ def main():
 
 
 if __name__ == '__main__':
-    NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     parser = argparse.ArgumentParser(description='assembly_metadata')
 
     parser.add_argument('--assemblyFolder', help='Assembly folder', default='%s/genomes'%(NANO_DIR))

@@ -426,7 +426,7 @@ def main():
 
 
 if __name__ == '__main__':
-    NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     parser = argparse.ArgumentParser(description='Aligner')
 
     parser.add_argument('--debug', dest='debug', default=False, action='store_true')
