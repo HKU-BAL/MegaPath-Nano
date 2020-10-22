@@ -98,7 +98,7 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
 
     name_groupby_count=align_list.groupby(['name']).size().sort_values(ascending=False)
     species_list=name_groupby_count.index
-    name_groupby_count=name_groupby_count.to_dict()
+    name_groupby_count=name_groupby_count.to_dict(into=OrderedDict)
     unique_alignment_align_list=align_list.drop_duplicates(subset='read_id',keep=False)
     unique_alignment_name_groupby_count=unique_alignment_align_list.groupby(['name']).size().to_dict()
 
