@@ -510,7 +510,7 @@ def summary_stat_2(*,
     align_stat_plus_summary = align_stat_plus_summary.assign(
                                                              log_uncovered_percent = lambda x: numpy.where(1 - x['adjusted_covered_percent'] > 0, numpy.log(1 - x['adjusted_covered_percent']), 0),
                                                             ).assign(
-                                                                     adjusted_average_depth = lambda x: x['adjusted_covered_percent'] * x['total_aligned_bp'] / (x[length_col] - x['noise_span_bp']) + (1 - x['adjusted_covered_percent']) * (0 - x['log_uncovered_percent']),
+                                                                     adjusted_average_depth = lambda x: x['adjusted_covered_percent'] * x['total_aligned_bp'] / (x[length_col] - x['noise_span_bp']),
                                                                     ).drop(['log_uncovered_percent'], axis=1)
     align_stat_plus_summary = align_stat_plus_summary.assign(
                                                              adjusted_total_aligned_bp = lambda x: x['adjusted_average_depth'] * x[length_col],
