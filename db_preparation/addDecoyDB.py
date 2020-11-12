@@ -3,9 +3,17 @@ from shutil import copyfile
 import os
 from Bio import SeqIO
 
-FLAGS = None
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Add fasta to decoy db')
+    parser.add_argument('--decoy_fasta', required=True)
 
-def main():
+    cwd=os.path.dirname(os.path.realpath(__file__))
+    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    parser.add_argument('--assembly_dir', default='%s/genomes' %(nano_dir))
+    parser.add_argument('--config_folder', help='Config file folder', default='%s/config' %(nano_dir))
+
+    FLAGS = parser.parse_args()
+
     decoy_name=os.path.basename(os.path.splitext(FLAGS.decoy_fasta))
     path= '%s/refseq/plasmid/%s' %(assembly_dir,decoy_name)
     copyfile(FLAGS.decoy_fasta,path)
@@ -21,18 +29,5 @@ def main():
             sequenceSummaryWriter.write("%s\t%d\t%s\n"%(record.id, len(record), decoy_name))
     assemblyLengthWriter.write("%s\t%d\n"%(decoy_name, totalLength))
     assemblyPathWriter.write("%s\t%s\n"%(decoy_name, path))
-    ssemblyTaxidWriter.write("%s\t1000000099\t1000000099\t1000000001\t%s\n"%(decoy_name, '35'))  #arbitrary taxid
+    assemblyTaxidWriter.write("%s\t1000000099\t1000000099\t1000000001\t%s\n"%(decoy_name, '35'))  #arbitrary taxid
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Add fasta to decoy db')
-    parser.add_argument('--decoy_fasta', required=True)
-
-    cwd=os.path.dirname(os.path.realpath(__file__))
-    nano_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    parser.add_argument('--assembly_dir', default='%s/genomes' %(nano_dir))
-    parser.add_argument('--config_folder', help='Config file folder', default='%s/config' %(nano_dir))
-
-    FLAGS, UNPARSED = parser.parse_known_args()
-
-    main()
