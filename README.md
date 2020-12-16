@@ -30,8 +30,8 @@ cd MegaPath-Nano
 
 ## Option 2: Docker
 ```
-docker build -f ./Dockerfile -t mpn_image . 
-docker run -it mpn_image /bin/bash
+sudo docker build -f ./Dockerfile -t mpn_image . 
+sudo docker run -it mpn_image /bin/bash
 ```
 
 ## Database Installation
