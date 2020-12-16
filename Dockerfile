@@ -10,6 +10,7 @@ RUN apt-get update --fix-missing && \
         bzip2 \
         make \
         gcc \
+        g++ \
         git \
         vcftools && \
     rm -rf /bar/lib/apt/lists/* && \
