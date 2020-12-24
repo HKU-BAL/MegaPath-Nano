@@ -34,5 +34,6 @@ ENV PATH /opt/conda/envs/mpn/bin:$PATH
 RUN /bin/bash -c ". activate mpn && \
     conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools pysam tabulate cgecore ncbi-amrfinderplus && \
     pip install -Iv biopython==1.72 && \
+    conda update -c conda-forge biopython && \
     pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick seaborn \
     pandarallel"
