@@ -20,7 +20,7 @@ conda activate mpn
 
 # installing all dependencies for both modules
 conda install pandas==0.23 psutil pybedtools qcat bioconvert seqtk minimap2 bcftools samtools pysam tabulate cgecore ncbi-amrfinderplus
-pip install -Iv biopython==1.72  #for compatibility until an update of rgi
+pip install --force-reinstall -v biopython==1.72  #for compatibility until an update of rgi
 pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick seaborn pandarallel
 
 # git clone MegaPath-Nano
