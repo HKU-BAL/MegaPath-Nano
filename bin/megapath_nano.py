@@ -1276,8 +1276,8 @@ def step_placement_to_species(megapath_nano, placement_to_species):
 
     if FLAGS.taxon_and_AMR_module_option=='AMR_module_only':
         os.sys.exit('Finished alignment.')
-
-    placement_to_species.O.align_list=Reassign(placement_to_species.O.align_list)
+    if FLAGS.reassignment == True:
+        placement_to_species.O.align_list=Reassign(placement_to_species.O.align_list)
 
     placement_to_species.O.best_align_list = placement_to_species.O.align_list.sort_values(['read_id', 'alignment_score', 'alignment_score_tiebreaker']).drop_duplicates(subset=['read_id'], keep='last').copy()
 
@@ -4856,6 +4856,10 @@ if __name__ == '__main__':
     group_taxon_and_AMR_module_option.add_argument('--taxon_and_AMR_module', dest='taxon_and_AMR_module_option', action='store_const',const='taxon_and_AMR_module')
     group_taxon_and_AMR_module_option.add_argument('--taxon_module_only', dest='taxon_and_AMR_module_option', action='store_const',const='taxon_module_only')
     group_taxon_and_AMR_module_option.add_argument('--AMR_module_only', dest='taxon_and_AMR_module_option', action='store_const',const='AMR_module_only')
+    
+    group_reassignment = parser.add_mutually_exclusive_group(required=False)
+    group_reassignment.add_argument('--reassignment', dest='reassignment', action='store_true')
+    group_reassignment.add_argument('--no-reassignment', dest='reassignment', action='store_false')
     # Set up for output options
 
     group_output_adaptor_trimmed_query = parser.add_mutually_exclusive_group(required=False)
@@ -4933,6 +4937,7 @@ if __name__ == '__main__':
     parser.set_defaults(reassign_read_id=False)
     parser.set_defaults(all_taxon_steps=True)
     parser.set_defaults(taxon_and_AMR_module_option='taxon_and_AMR_module')
+    parser.set_defaults(reassignment=False)
 
     # experimental
     parser.set_defaults(mapping_only=False)
