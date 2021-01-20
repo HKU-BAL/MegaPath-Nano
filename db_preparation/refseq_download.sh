@@ -22,4 +22,4 @@ python3 refseq_download.py --vertebrate_mammalian --get_summary > nohup.vertebra
 python3 refseq_download.py --plasmid --num 8 --db_dir ${DB_DIR} > nohup.plasmid_refseq_download & 
 wait
 cd ${DB_DIR}
-parallel -j 48 'zcat {} >> refseq.fna' ::: */*/*gz
+find . -type f -name "*.gz" | parallel -j 1 "zcat {} >> refseq.fna"
