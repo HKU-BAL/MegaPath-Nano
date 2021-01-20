@@ -232,7 +232,7 @@ def Align(*,
     aligner_output = os.open(aligner_output_filename, flags=os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode=0o644)
     
     awk_command = ['awk', ]
-    awk_command.append('{OFS="\t"};{gsub("NM:i:","")};{gsub("AS:i:","")};{gsub("s1:i:","")};{gsub("tp:A:P","0")};{gsub("tp:A:S","0")};{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$15}')
+    awk_command.append('{OFS="\t"};{gsub("NM:i:","")};{gsub("AS:i:","")};{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$15}')
     awk_process = subprocess.Popen(awk_command, close_fds=True, stdin=awk_stdin, stdout=aligner_output)
 
 
