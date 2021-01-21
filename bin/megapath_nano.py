@@ -2275,7 +2275,8 @@ def step_noise_removal(megapath_nano, noise_removal):
 
     noise_removal.O.noise_bed = noise_removal.I.noise_bed
     
-    megapath_nano.log.print('{num_removed} out of {num_align} alignments removed'.format(
+    #  TODO fix num
+    #megapath_nano.log.print('{num_removed} out of {num_align} alignments removed'.format(
                                                                                     num_removed=noise_removal.O.num_align_before-noise_removal.O.num_align_after,
                                                                                     num_align=noise_removal.O.num_align_before))
 
