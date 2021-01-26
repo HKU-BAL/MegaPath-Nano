@@ -80,7 +80,6 @@ def iterate_reassign(align_list,i_explains_j_dict,AS_threshold):
     uk[['read_id','name','alignment_score','sequence_id']].parallel_apply( second_index ,axis=1)
     return align_list
 
-FLAGS=None
 def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_threshold=0):
     #TODO iterate groupby and explainlist
     taxon_df=pd.read_csv('%s/sequence_name' %FLAGS.db_folder, sep='\t',header=None,names=['sequence_id','name'])
@@ -146,14 +145,14 @@ if __name__ == '__main__':
     NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     parser = argparse.ArgumentParser(description='MegaPath-Nano: Reassignment')
     parser.add_argument('--align_list', required=True,help='Input align list')
-    parser.add_argument('--AS_threshold', default=0.0, help='Percentage of AS required for an alignment to be reassigned to another species from the original species')
-    parser.add_argument('--ratio', default=0.05, help='Ratio of dissimilarity between species')
-    parser.add_argument('--error_rate', default=0.05, help='Allowed error rate')
+    parser.add_argument('--AS_threshold', default=0.0, type=float, help='Percentage of AS required for an alignment to be reassigned to another species from the original species')
+    parser.add_argument('--ratio', default=0.05, type=float, help='Ratio of dissimilarity between species')
+    parser.add_argument('--error_rate', default=0.05, type=float, help='Allowed error rate')
     parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
-    parser.add_argument('--iteration', default=1, help='Num of iterations')
+    parser.add_argument('--iteration', default=1, type=int, help='Num of iterations')
     parser.add_argument('--db_folder', default='%s/db'%(NANO_DIR), help='Db folder')
     FLAGS = parser.parse_args()
-    align_list=pd.read_csv(FLAGS.align_list, index_col =0)
+    align_list=pd.read_csv(FLAGS.align_list, index_col=0)
     Reassign(align_list,iteration=FLAGS.iteration,error_rate=FLAGS.error_rate,ratio=FLAGS.ratio,threads=FLAGS.threads,AS_threshold=FLAGS.AS_threshold)
 
 
