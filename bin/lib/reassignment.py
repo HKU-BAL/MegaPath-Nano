@@ -104,13 +104,13 @@ def Reassign(align_list,iteration=1,error_rate=0.05,ratio=0.05,threads=96,AS_thr
     mcount_set_list=[]
     mcount_read_id_list=read_id_groupby.size()[read_id_groupby.size()>1].index
 
-    with ThreadPoolExecutor(int(threads)) as exec:
+    with ThreadPoolExecutor(threads) as exec:
         for read_id in mcount_read_id_list:
             species_name_list=read_id_groupby.get_group(read_id)['name'].tolist()
             exec.submit(build_mcount_set_list, species_name_list,mcount_set_list)
     Counter_mcount_set_list=Counter(mcount_set_list)
     i_explains_j_dict={}
-    with ThreadPoolExecutor(int(threads)) as exec:
+    with ThreadPoolExecutor(threads) as exec:
         for species_i in species_list:
             for species_j in species_list:
                 if species_i==species_j or species_i in i_explains_j_dict.values():
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     parser.add_argument('--AS_threshold', default=0.0, type=float, help='Percentage of AS required for an alignment to be reassigned to another species from the original species')
     parser.add_argument('--ratio', default=0.05, type=float, help='Ratio of dissimilarity between species')
     parser.add_argument('--error_rate', default=0.05, type=float, help='Allowed error rate')
-    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), help='Num of threads')
+    parser.add_argument('--threads', default=psutil.cpu_count(logical=True), type=int, help='Num of threads')
     parser.add_argument('--iteration', default=1, type=int, help='Num of iterations')
     parser.add_argument('--db_folder', default='%s/db'%(NANO_DIR), help='Db folder')
     FLAGS = parser.parse_args()
