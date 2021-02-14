@@ -225,13 +225,13 @@ def similarity_option(*,
 
         # 0.4 divergence could be properly supported with some modification
     if divergence == 0.8:
-        # This is not ideal but minimap2 does not support 2 * (O + E) + A > 128
-        return '-k15 -w15 -A1 -B124 -O0 -E63 -s50 -z50'
+        # This is not ideal but minimap2 requires 2 * (O + E) + A < 128 and O must be positive
+        return '-k15 -w15 -A1 -B124 -O1 -E62 -s50 -z50'
     elif divergence == 1:
-        # This is not ideal but minimap2 does not support 2 * (O + E) + A > 128
+        # This is not ideal but minimap2 requires 2 * (O + E) + A < 128
         return '-k15 -w15 -A1 -B99 -O4 -E59 -s50 -z50'
     elif divergence == 2:
-        # This is not ideal but minimap2 does not support 2 * (O + E) + A > 128
+        # This is not ideal but minimap2 requires 2 * (O + E) + A < 128
         return '-k15 -w15 -A1 -B49 -O39 -E24 -s50 -z50'
     elif divergence == 5:
         return '-k15 -w15 -A1 -B19 -O39 -E9 -s50 -z50'
