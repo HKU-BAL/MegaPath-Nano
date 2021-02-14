@@ -4990,7 +4990,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_qcat_thread', help='Maximum number of threads used by qcat', type=int, default=64)
     parser.add_argument('--max_AMR_thread', help='Maximum number of threads used by AMR module', type=int, default=64)
 
-    parser.add_argument('--genus_height', help='Height in taxonomy to be considered as genus', type=int, default=7)
+    parser.add_argument('--genus_height', help='Height in taxonomy to be considered as genus. Full rank info in db_preparation/genAssemblyMetadata.py', type=int, default=11)
 
     # for all alignments
     parser.add_argument('--min_alignment_score', help='Min alignment score', type=int, default=0)
