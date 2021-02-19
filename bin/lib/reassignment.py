@@ -37,7 +37,7 @@ def build_i_explains_j_dict(species_i,species_j,name_groupby_count,unique_alignm
     UCount_i=Count(unique_alignment_name_groupby_count,species_i)
     UCount_j=Count(unique_alignment_name_groupby_count,species_j)
     MCount_i_j=Counter_mcount_set_list[frozenset({species_i,species_j})]
-    if AllCount_i+MCount_i_j>=ratio*AllCount_i and UCount_j<error_rate*UCount_i:
+    if AllCount_i-MCount_i_j>=ratio*AllCount_i and UCount_j<error_rate*UCount_i:
         if species_i in i_explains_j_dict:
             i_explains_j_dict[species_i].add(species_j)
         else:
