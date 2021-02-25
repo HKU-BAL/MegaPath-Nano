@@ -51,7 +51,7 @@ To use MegaPath-Nano, users need to download RefSeq database and build index fir
 ./updateDB.sh [${DB_DIR}=MegaPath-Nano/genomes/refseq/] [${SQL_DIR}=MegaPath-Nano/db/]
 
 # (optional) add custom FASTA sequences to the decoy database 
-python addDecoyDB.py --decoy_fasta $(fasta)
+python addDecoyDB.py --decoy_fasta ${fasta}
 
 # AMR
 # prepare AMR databases:
