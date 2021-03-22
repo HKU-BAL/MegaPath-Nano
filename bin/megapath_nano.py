@@ -1277,7 +1277,7 @@ def step_placement_to_species(megapath_nano, placement_to_species):
     if FLAGS.taxon_and_AMR_module_option=='AMR_module_only':
         os.sys.exit('Finished alignment.')
     if FLAGS.reassignment == True:
-        placement_to_species.O.align_list=Reassign(placement_to_species.O.align_list)
+        placement_to_species.O.align_list=Reassign(placement_to_species.O.align_list,threads=megapath_nano.global_options['alignerThreadOption'],level=FLAGS.resolution)
 
     placement_to_species.O.best_align_list = placement_to_species.O.align_list.sort_values(['read_id', 'alignment_score', 'alignment_score_tiebreaker']).drop_duplicates(subset=['read_id'], keep='last').copy()
 
@@ -3651,7 +3651,8 @@ def step_format_output(megapath_nano, options):
     megapath_nano.best_align_stat.query('adjusted_total_aligned_bp > 0').sort_values(['adjusted_total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.preport', sep='\t', header=True, index=False, columns=align_stat_col_name_dot_report)
     
     taxon_df=pandas.read_csv('%s/sequence_name' %(megapath_nano.global_options['db_folder']),sep='\t',header=None,names=['sequence_id','name'])
-    taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]))
+    if level=='species':
+        taxon_df['name']=taxon['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
     align_list_species_name=megapath_nano.id_best_align_list.merge(right=taxon_df,on=['sequence_id'],how='left')
     #update name
     align_list_species_name=pandas.concat([align_list_species_name[align_list_species_name['name'].isnull()].assign(name=lambda x: x['sequence_id']),align_list_species_name[~align_list_species_name['name'].isnull()]])
@@ -4861,6 +4862,10 @@ if __name__ == '__main__':
     group_reassignment = parser.add_mutually_exclusive_group(required=False)
     group_reassignment.add_argument('--reassignment', dest='reassignment', action='store_true')
     group_reassignment.add_argument('--no-reassignment', dest='reassignment', action='store_false')
+
+    group_reassignment = parser.add_mutually_exclusive_group(required=False)
+    group_reassignment.add_argument('--species', dest='resolution', action='store_const',const='species')
+    group_reassignment.add_argument('--strain', dest='resolution', action='store_const',const='strain')
     # Set up for output options
 
     group_output_adaptor_trimmed_query = parser.add_mutually_exclusive_group(required=False)
@@ -4939,6 +4944,7 @@ if __name__ == '__main__':
     parser.set_defaults(all_taxon_steps=True)
     parser.set_defaults(taxon_and_AMR_module_option='taxon_and_AMR_module')
     parser.set_defaults(reassignment=False)
+    parser.set_defaults(resolution='species')
 
     # experimental
     parser.set_defaults(mapping_only=False)
