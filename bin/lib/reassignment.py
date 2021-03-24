@@ -67,7 +67,7 @@ def Reassign(align_list,error_rate=0.05,ratio=0.05,threads=96,AS_threshold=0,lev
     #TODO iterate groupby and explainlist
     taxon_df=pd.read_csv('%s/sequence_name' %FLAGS.db_folder, sep='\t',header=None,names=['sequence_id','name'])
     if level=='species':
-        taxon_df['name']=taxon['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
+        taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
     align_list=align_list.merge(right=taxon_df,on=['sequence_id'],how='inner')
     #  keep the highest AS for same read_id & name
     align_list=align_list.sort_values(by=['alignment_score']).drop_duplicates(subset=['read_id','name'],keep='last')

@@ -3652,7 +3652,7 @@ def step_format_output(megapath_nano, options):
     
     taxon_df=pandas.read_csv('%s/sequence_name' %(megapath_nano.global_options['db_folder']),sep='\t',header=None,names=['sequence_id','name'])
     if level=='species':
-        taxon_df['name']=taxon['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
+        taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
     align_list_species_name=megapath_nano.id_best_align_list.merge(right=taxon_df,on=['sequence_id'],how='left')
     #update name
     align_list_species_name=pandas.concat([align_list_species_name[align_list_species_name['name'].isnull()].assign(name=lambda x: x['sequence_id']),align_list_species_name[~align_list_species_name['name'].isnull()]])
