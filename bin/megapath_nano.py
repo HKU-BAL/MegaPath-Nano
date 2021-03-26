@@ -997,7 +997,7 @@ def step_adaptor_trimming(megapath_nano, adaptor_trimming):
     trimming_process_list = []
 
     for file_index, filename in enumerate(adaptor_trimming.I.query_filename_list['path']):
-        trimming_command = ['qcat', megapath_nano.global_options['qcatThreadOption'], '--trim', '-f', filename, '-o', adaptor_trimming.O.query_filename_list['path'][file_index]]
+        trimming_command = ['porechop', megapath_nano.global_options['porechopThreadOption'], '--require_two_barcodes','-i', filename, '-o', adaptor_trimming.O.query_filename_list['path'][file_index]]
         trimming_process = subprocess.Popen(trimming_command, close_fds=True)
         trimming_process_list.append(trimming_process)
 
@@ -3909,7 +3909,7 @@ def main():
                                'human_repetitive_region_filter_assembly_id':FLAGS.human_repetitive_region_filter_assembly_id,
 
                                'max_aligner_thread':FLAGS.max_aligner_thread,
-                               'max_qcat_thread':FLAGS.max_qcat_thread,
+                               'max_porechop_thread':FLAGS.max_porechop_thread,
                                'max_AMR_thread':FLAGS.max_AMR_thread,
 
                                'genus_height':FLAGS.genus_height,
@@ -4010,7 +4010,7 @@ def main():
     megapath_nano.global_options['max_target_GBase_per_batch'] = ram_available // 1024 // 1024 // 1024 // 8 
 
     megapath_nano.global_options['alignerThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_aligner_thread'])) + ' -I ' + str(megapath_nano.global_options['max_target_GBase_per_batch']) + 'G'
-    megapath_nano.global_options['qcatThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_qcat_thread']))
+    megapath_nano.global_options['porechopThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_porechop_thread']))
     megapath_nano.global_options['AMRThreadOption'] = str(min(num_core, megapath_nano.global_options['max_AMR_thread']))
 
     megapath_nano.log.print('Loading assembly metadata')
@@ -4993,7 +4993,7 @@ if __name__ == '__main__':
     parser.add_argument('--human_repetitive_region_filter_assembly_id', help='Assembly ID for human similar region filter', default='GCF_000001405.37')
 
     parser.add_argument('--max_aligner_thread', help='Maximum number of threads used by aligner', type=int, default=64)
-    parser.add_argument('--max_qcat_thread', help='Maximum number of threads used by qcat', type=int, default=64)
+    parser.add_argument('--max_porechop_thread', help='Maximum number of threads used by porechop', type=int, default=64)
     parser.add_argument('--max_AMR_thread', help='Maximum number of threads used by AMR module', type=int, default=64)
 
     parser.add_argument('--genus_height', help='Height in taxonomy to be considered as genus. Full rank info in db_preparation/genAssemblyMetadata.py', type=int, default=11)
