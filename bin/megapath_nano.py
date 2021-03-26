@@ -1266,7 +1266,7 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               log_file=megapath_nano.aligner_log,
                                               query_filename_list=placement_to_species.I.query_filename_list,
                                               target_assembly_list=placement_to_species.I.target_assembly_list,
-                                              aligner_options=shlex.split(megapath_nano.global_options['alignerThreadOption'] + ' -N 50 -p 1 -x map-ont'),
+                                              aligner_options=shlex.split(megapath_nano.global_options['alignerThreadOption'] + ' -N 50 -p 1 -x map-ont --split-prefix tmp'),
                                               paf_path_and_prefix=placement_to_species.I.paf_path_and_prefix,
                                               mapping_only=megapath_nano.global_options['mapping_only'],
                                               taxon_and_AMR_module_option=FLAGS.taxon_and_AMR_module_option,
@@ -1294,7 +1294,7 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                                                                             )[['read_id', 'species_tax_id']]
 
     if placement_to_species.O.selected_species_list.shape[0] <= 0:
-        os.sys.exit('No species can be identified')
+        os.sys.exit('No species can be identified, or the alignment output is empty in case the memory is not enough for alignment.')
 
     if megapath_nano.global_options['debug'] == False:
         shutil.rmtree(RAM_dir_name)
