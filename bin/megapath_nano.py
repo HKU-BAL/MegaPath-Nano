@@ -4864,8 +4864,8 @@ if __name__ == '__main__':
     group_reassignment.add_argument('--no-reassignment', dest='reassignment', action='store_false')
 
     group_reassignment = parser.add_mutually_exclusive_group(required=False)
-    group_reassignment.add_argument('--species', dest='resolution', action='store_const',const='species')
-    group_reassignment.add_argument('--strain', dest='resolution', action='store_const',const='strain')
+    group_reassignment.add_argument('--species_level', dest='resolution', action='store_const',const='species')
+    group_reassignment.add_argument('--strain_level', dest='resolution', action='store_const',const='strain')
     # Set up for output options
 
     group_output_adaptor_trimmed_query = parser.add_mutually_exclusive_group(required=False)
