@@ -11,8 +11,7 @@ RUN apt-get update --fix-missing && \
         make \
         gcc \
         g++ \
-        git \
-        vcftools && \
+        git && \
     rm -rf /bar/lib/apt/lists/* && \
     git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano /opt/MegaPath-Nano
 
