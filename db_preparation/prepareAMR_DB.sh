@@ -23,7 +23,7 @@ wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/do
 awk 'FNR==1{print ""}{print}' cbmar/*tide.fasta > cbmar/cbmar_nucl.fsa && rm -f cbmar/*tide.fasta
 wget -r -np -nd -R "*.html*" http://proteininformatics.org/mkumar/lactamasedb/download_protein/ -P cbmar
 awk 'FNR==1{print ""}{print}' cbmar/*.fasta > cbmar/cbmar_prot.fsa && rm -f cbmar/*.fasta
-makeblastdb -in cbmar_prot.fsa   -title "cbmar_prot" -dbtype prot
+makeblastdb -in cbmar/cbmar_prot.fsa   -title "cbmar_prot" -dbtype prot
 
 #download AMRFinder database
 amrfinder -u
