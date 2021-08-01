@@ -52,8 +52,8 @@ def reassign_alignment(align_list,i_explains_j_dict,AS_threshold):
             def first_AS_passed(x):
                 return True if x['alignment_score'] * AS_threshold <= x['first_alignment_score'] else False
             search_pair['first_AS_passed'] = search_pair[['alignment_score','first_alignment_score']].apply(first_AS_passed,axis=1)
-            search_pair=search_pair[search_pair["first_AS_passed"]]
-            align_list.loc[search_pair.index,['name','sequence_id']]=[name,name+"_RA"]
+            search_pair=search_pair[search_pair['first_AS_passed']]
+            align_list.loc[search_pair.index,['name','sequence_id']]=[name,f'{name}_reassigned']
     align_list['is_in_explain_other'] = align_list['name'].apply(is_in_explain_other)
     uniq_key = align_list[align_list['is_in_explain_other']]
     #  sort by ranking order of name
@@ -63,9 +63,9 @@ def reassign_alignment(align_list,i_explains_j_dict,AS_threshold):
     uniq_key[['read_id','name','alignment_score','sequence_id']].apply( second_index ,axis=1)
     return align_list
 
-def Reassign(align_list,db_folder,error_rate=0.05,ratio=0.05,threads=96,AS_threshold=0,level='species'):
+def Reassign(align_list,db_folder,error_rate=0.05,ratio=0.05,threads=24,AS_threshold=0,level='species'):
     #TODO iterate groupby and explainlist
-    taxon_df=pd.read_csv('%s/sequence_name' %db_folder, sep='\t',header=None,names=['sequence_id','name'])
+    taxon_df=pd.read_csv(f'{db_folder}/sequence_name', sep='\t',header=None,names=['sequence_id','name'])
     if level=='species':
         taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
     align_list=align_list.merge(right=taxon_df,on=['sequence_id'],how='inner')
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('--ratio', default=0.05, type=float,help='Ratio of dissimilarity between species')
     parser.add_argument('--error_rate', default=0.05, type=float,help='Allowed error rate')
     parser.add_argument('--threads', default=psutil.cpu_count(logical=True), type=int, help='Num of threads')
-    parser.add_argument('--db_folder', default='%s/db'%(NANO_DIR), help='Db folder')
+    parser.add_argument('--db_folder', default=f'{NANO_DIR}/db', help='Db folder')
     FLAGS = parser.parse_args()
     align_list_col_type = {'read_id': str, 'read_length': int, 'read_from': int, 'read_to': int, 'strand': str, 'sequence_id': str, 'sequence_length': int, 'sequence_from' : int, 'sequence_to': int, 'match': int, 'mapq': int, 'edit_dist': int, 'alignment_score': int, 'assembly_id': str, 'tax_id': int, 'species_tax_id': int, 'genus_tax_id': int, 'alignment_score_tiebreaker': float,'alignment_block_length':int}
     align_list=pd.read_csv(FLAGS.align_list, index_col =0,dtype=align_list_col_type)

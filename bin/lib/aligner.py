@@ -41,7 +41,7 @@ align_stat_col_type = {'assembly_id': str, 'count': int, 'alignment_score': int}
 def align_list_to_bed(*,
                       align_list):
 
-    temp_align_list = align_list.assign(assembly_id_sequence_id = lambda x: x['assembly_id'] + ',' + x['sequence_id'])
+    temp_align_list = align_list.assign(assembly_id_sequence_id = lambda x: f"{x['assembly_id']},{x['sequence_id']}")
     temp_bed = BedTool.from_dataframe(temp_align_list[['assembly_id_sequence_id', 'sequence_from', 'sequence_to']])
 
     temp_merged_bed = temp_bed.sort().merge()
@@ -104,40 +104,43 @@ def Align(*,
           mapping_only=False,
           taxon_and_AMR_module_option='',
           AMR_output_folder='',
+          align_concat_fa=False,
           ):
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
 
-    num_target_specification = 0
-    if target_filename_list is not None and target_filename_list['path'].shape[0] > 0:
-        num_target_specification += 1
-    if target_assembly_list is not None and target_assembly_list['assembly_id'].shape[0] > 0:
-        num_target_specification += 1
+    if align_concat_fa==False:
+        num_target_specification = 0
+        if target_filename_list is not None and target_filename_list['path'].shape[0] > 0:
+            num_target_specification += 1
+        if target_assembly_list is not None and target_assembly_list['assembly_id'].shape[0] > 0:
+            num_target_specification += 1
 
-    if num_target_specification != 1:
-        os.sys.exit('Exactly one of target_filename_list and target_assembly_list must be specified')
+        if num_target_specification != 1:
+            os.sys.exit('Exactly one of target_filename_list and target_assembly_list must be specified')
 
-    if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
-        target_filename_list = assembly_metadata.get_assembly_path(assembly_list=target_assembly_list)
-        if target_filename_list is None or target_filename_list.shape[0] != target_assembly_list['assembly_id'].shape[0]:
-            os.sys.exit('Target assembly_id not found')
-        target_filename_list['path'] = target_filename_list['path'].map(lambda x: os.path.join(global_options['assembly_folder'], x))
+        #target_filename_list has only contig-level genomes, target_assembly_* has all
+        if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
+            target_filename_list = assembly_metadata.get_assembly_path(assembly_list=target_assembly_list)
+            if target_filename_list is None:
+                os.sys.exit('Target assembly_id not found')
+            target_filename_list['path'] = target_filename_list['path'].map(lambda x: os.path.join(global_options['assembly_folder'], x))
+        
+        if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
+            target_assembly_length = assembly_metadata.get_assembly_length(assembly_list=target_assembly_list)
+            if target_assembly_length is None: 
+                os.sys.exit('Target assembly_length not found')
+        else:
+            target_assembly_length = target_filename_list.assign(assembly_length = lambda x: 1)
     
-    if target_assembly_list is not None and len(target_assembly_list['assembly_id']) > 0:
-        target_assembly_length = assembly_metadata.get_assembly_length(assembly_list=target_assembly_list)
-        if target_assembly_length is None or target_assembly_length.shape[0] != target_assembly_list.shape[0]:
-            os.sys.exit('Target assembly_length not found')
-    else:
-        target_assembly_length = target_filename_list.assign(assembly_length = lambda x: 1)
     
     
-    
-    num_target = target_filename_list.shape[0]
-    if target_assembly_length.shape[0] != num_target:
-        os.sys.exit('Number of target_assembly_length does not match number of target_filename_list') 
+        num_target = target_filename_list.shape[0]
+        if target_assembly_length.shape[0] != num_target:
+            os.sys.exit('Number of target_assembly_length does not match number of target_filename_list') 
 
-    
-    temp_pipe_target_fasta_name = os.path.join(local_temp_dir_name, 'temp_pipe_target_fasta')
-    os.mkfifo(temp_pipe_target_fasta_name)
+        
+        temp_pipe_target_fasta_name = os.path.join(local_temp_dir_name, 'temp_pipe_target_fasta')
+        os.mkfifo(temp_pipe_target_fasta_name)
 
     num_query_specification = 0
     if query_filename_list is not None and query_filename_list['path'].shape[0] > 0:
@@ -176,8 +179,8 @@ def Align(*,
         output_PAF = True
     
     if output_PAF == True:
-        paf_filename = paf_path_and_prefix + '.paf'
-        sam_filename = paf_path_and_prefix + '.sam'
+        paf_filename = f'{paf_path_and_prefix}.paf'
+        sam_filename = f'{paf_path_and_prefix}.sam'
         sam_file = os.open(sam_filename, flags=os.O_CREAT |  os.O_WRONLY|os.O_TRUNC, mode=0o644)
 
     #  align query to target (input from named pipe)
@@ -190,36 +193,50 @@ def Align(*,
         #aligner_command.extend(['--split-prefix','tmp'])
     aligner_command.extend(aligner_options)
 
-    aligner_command.append(temp_pipe_target_fasta_name)
-    aligner_command.extend(query_filename_list['path'])
-    if output_PAF == True:
-        aligner_stdout=sam_file
-    else:
-        aligner_stdout=subprocess.PIPE
-    
-    aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
-    
-    #  cat target to pipe
-    temp_pipe_target_fasta = os.open(temp_pipe_target_fasta_name, flags=os.O_WRONLY)
-    
-    #chunk
-    chunk_size=1000
-    for i in range(0,len(target_filename_list['path']),chunk_size):
-        cat_command = ['cat',]
-        cat_command.extend(target_filename_list['path'][i:i+chunk_size].tolist())
-        cat_process = subprocess.Popen(cat_command, close_fds=True, stdout=temp_pipe_target_fasta)
-        cat_process.wait()
+    if align_concat_fa==False:    
+        aligner_command.append(temp_pipe_target_fasta_name)
+        aligner_command.extend(query_filename_list['path'])
+        aligner_command.extend(['--split-prefix','tmp'])
+        if output_PAF == True:
+            aligner_stdout=sam_file
+        else:
+            aligner_stdout=subprocess.PIPE
+        
+        aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
+        
+        #  cat target to pipe
+        temp_pipe_target_fasta = os.open(temp_pipe_target_fasta_name, flags=os.O_WRONLY)
+        
+        #chunk
+        chunk_size=1000
+        for i in range(0,len(target_filename_list['path']),chunk_size):
+            cat_command = ['cat',]
+            cat_command.extend(target_filename_list['path'][i:i+chunk_size].tolist())
+            cat_process = subprocess.Popen(cat_command, close_fds=True, stdout=temp_pipe_target_fasta)
+            cat_process.wait()
+
+    elif align_concat_fa==True:
+        aligner_command.append(f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))}/genomes/refseq/refseq.fna.gz')
+        aligner_command.extend(query_filename_list['path'])
+        if output_PAF == True:
+            aligner_stdout=sam_file
+        else:
+            aligner_stdout=subprocess.PIPE
+        
+        aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
 
     if output_PAF == True:
-        os.close(temp_pipe_target_fasta)
+        if align_concat_fa==False:
+            cat_process.wait()
+            os.close(temp_pipe_target_fasta)
         aligner_process.wait()
-        bam_filename=paf_path_and_prefix+'.bam'
-        bam_operation_command = 'samtools view -F2308 -b {sam}|samtools sort -o {bam};samtools index {bam}'.format(sam=sam_filename,bam=bam_filename)
+        bam_filename=f'{paf_path_and_prefix}.bam'
+        bam_operation_command = f'samtools view -F1796 -b {sam_filename}|samtools sort -o {bam_filename};samtools index {bam_filename};'
         if taxon_and_AMR_module_option=='taxon_and_AMR_module' or taxon_and_AMR_module_option=='AMR_module_only':
-            bam_operation_command+=';python {path}/megapath_nano_amr.py --query_bam {bam} --output_folder {AMR_output_folder} --threads {threads}'.format(path=os.path.dirname(os.path.dirname(os.path.realpath(__file__))),bam=bam_filename,AMR_output_folder=AMR_output_folder,threads=global_options['AMRThreadOption'])
+            bam_operation_command+=f'python {os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
         if taxon_and_AMR_module_option=='AMR_module_only':
-            sys.exit('Finished the step of alignment.')
+            sys.exit('Finished alignment step.')
         convert=SAM2PAF(sam_filename,paf_filename)
         convert(pri_only=False)
         awk_stdin= os.open(paf_filename, flags=os.O_RDONLY)
@@ -245,7 +262,6 @@ def Align(*,
     
     awk_process.wait()
     os.close(aligner_output)
-
     if output_PAF == True:
         os.close(sam_file)
 
@@ -436,8 +452,8 @@ if __name__ == '__main__':
     parser.add_argument('--temp_folder', help='temporary folder', default='')
     parser.add_argument('--RAM_folder', help='temporary folder in RAM', default='/run/shm')
 
-    parser.add_argument('--tool_folder', help='Tool folder', default='%s/tools'%(NANO_DIR))
-    parser.add_argument('--assembly_folder', help='Assembly folder', default='%s/genomes'%(NANO_DIR))
+    parser.add_argument('--tool_folder', help='Tool folder', default=f'{NANO_DIR}/tools')
+    parser.add_argument('--assembly_folder', help='Assembly folder', default=f'{NANO_DIR}/genomes')
     parser.add_argument('--aligner', help='Aligner program', default='minimap2')
     parser.add_argument('--aligner_log', help='Log for stderr output from aligner program', default='')
 

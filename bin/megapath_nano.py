@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3
-
 import os
 import sqlite3
 import argparse
@@ -13,7 +11,6 @@ import atexit
 import time
 import inspect
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy
 import pandas
 import pybedtools
@@ -1270,14 +1267,18 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               paf_path_and_prefix=placement_to_species.I.paf_path_and_prefix,
                                               mapping_only=megapath_nano.global_options['mapping_only'],
                                               taxon_and_AMR_module_option=FLAGS.taxon_and_AMR_module_option,
-                                              AMR_output_folder=megapath_nano.output_folder+'/AMR/')
+                                              align_concat_fa=True,
+                                              AMR_output_folder=f'{megapath_nano.output_folder}/AMR/')
     if megapath_nano.global_options['debug'] == True:
         placement_to_species.O.align_list.to_csv(path_or_buf=file_prefix_with_path + '.species_align_list', sep='\t', header=True, index=False)
 
     if FLAGS.taxon_and_AMR_module_option=='AMR_module_only':
         os.sys.exit('Finished alignment.')
     if FLAGS.reassignment == True:
-        placement_to_species.O.align_list=Reassign(placement_to_species.O.align_list,threads=megapath_nano.global_options['alignerThreadOption'],level=FLAGS.resolution)
+        placement_to_species.O.align_list=Reassign(align_list=placement_to_species.O.align_list,
+                                                   db_folder=megapath_nano.global_options["db_folder"],
+                                                   threads=min(psutil.cpu_count(logical=True), megapath_nano.global_options['max_aligner_thread']),
+                                                   level=FLAGS.resolution)
 
     placement_to_species.O.best_align_list = placement_to_species.O.align_list.sort_values(['read_id', 'alignment_score', 'alignment_score_tiebreaker']).drop_duplicates(subset=['read_id'], keep='last').copy()
 
@@ -1470,7 +1471,6 @@ def step_assembly_selection(megapath_nano, assembly_selection):
     megapath_nano.log.print('Number of species with assembly selected from species ID genome set only: {num_species}'.format(num_species=species_not_reached_min_average_depth.shape[0]))
     megapath_nano.log.print('end')
 
-
 def step_align_assembly_set(megapath_nano, align_assembly_set):
 
     megapath_nano.log.print('start')
@@ -1551,7 +1551,7 @@ def step_raw_stat(megapath_nano, raw_stat):
                                                       right_index = True,
                                                       suffixes=['', '_y'],
                                                       validate='m:1',
-                                                     ).fillna(0).query('alignment_score > human_and_decoy_best_alignment_score').drop(['human_and_decoy_best_alignment_score'], axis=1)
+                                                     ).fillna(0).query('alignment_score >= human_and_decoy_best_alignment_score').drop(['human_and_decoy_best_alignment_score'], axis=1)
 
     if megapath_nano.global_options['debug'] == True:
         raw_align_list.to_csv(path_or_buf=file_prefix_with_path + '.raw_align_list', sep='\t', header=True, index=False)
@@ -3327,7 +3327,7 @@ def step_format_output(megapath_nano, options):
     megapath_nano.assembly_info['species'] = megapath_nano.assembly_info['species'].astype('int')
     megapath_nano.assembly_info['assembly'] = megapath_nano.assembly_info['assembly'].astype('int')
 
-    if options.output_genome_set == True: #original is options.output_genome_set == False
+    if options.output_genome_set == True: 
         megapath_nano.assembly_info.sort_values(['assembly_id']).to_csv(path_or_buf=file_prefix_with_path + '.genome_set',
                                                                    sep='\t', header=True, index=False,
                                                                    columns=['human', 'decoy', 'species', 'assembly',] + assembly_info_col_name)
@@ -3392,24 +3392,24 @@ def step_format_output(megapath_nano, options):
 
 
     # Analysis
-
-    megapath_nano.human_sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.human_assembly_list)
-    megapath_nano.human_sequence_name = get_sequence_name(db_conn=megapath_nano.taxonomy_db_conn, log=megapath_nano.log, sequence_list=megapath_nano.human_sequence_list)
-    megapath_nano.human_best_align_stat = generate_align_stat_group_by_sequence_id(
-                                                                              assembly_metadata=megapath_nano.assembly_metadata,
-                                                                              log=megapath_nano.log,
-                                                                              align_list=megapath_nano.human_best_align_list,
-                                                                              sequence_info=megapath_nano.human_sequence_name,
-                                                                             )
-
-    megapath_nano.decoy_sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.decoy_assembly_list)
-    megapath_nano.decoy_sequence_name = get_sequence_name(db_conn=megapath_nano.taxonomy_db_conn, log=megapath_nano.log, sequence_list=megapath_nano.decoy_sequence_list)
-    megapath_nano.decoy_best_align_stat = generate_align_stat_group_by_sequence_id(
-                                                                              assembly_metadata=megapath_nano.assembly_metadata,
-                                                                              log=megapath_nano.log,
-                                                                              align_list=megapath_nano.decoy_best_align_list,
-                                                                              sequence_info=megapath_nano.decoy_sequence_name,
-                                                                             )
+    if not megapath_nano.human_assembly_list.empty:
+        megapath_nano.human_sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.human_assembly_list)
+        megapath_nano.human_sequence_name = get_sequence_name(db_conn=megapath_nano.taxonomy_db_conn, log=megapath_nano.log, sequence_list=megapath_nano.human_sequence_list)
+        megapath_nano.human_best_align_stat = generate_align_stat_group_by_sequence_id(
+                                                                                  assembly_metadata=megapath_nano.assembly_metadata,
+                                                                                  log=megapath_nano.log,
+                                                                                  align_list=megapath_nano.human_best_align_list,
+                                                                                  sequence_info=megapath_nano.human_sequence_name,
+                                                                                 )
+    if not megapath_nano.decoy_assembly_list.empty:
+        megapath_nano.decoy_sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.decoy_assembly_list)
+        megapath_nano.decoy_sequence_name = get_sequence_name(db_conn=megapath_nano.taxonomy_db_conn, log=megapath_nano.log, sequence_list=megapath_nano.decoy_sequence_list)
+        megapath_nano.decoy_best_align_stat = generate_align_stat_group_by_sequence_id(
+                                                                                  assembly_metadata=megapath_nano.assembly_metadata,
+                                                                                  log=megapath_nano.log,
+                                                                                  align_list=megapath_nano.decoy_best_align_list,
+                                                                                  sequence_info=megapath_nano.decoy_sequence_name,
+                                                                                 )
     
     #test generate_align_stat_by_sequence_id
     #sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.assembly_list)
@@ -3632,9 +3632,9 @@ def step_format_output(megapath_nano, options):
 
 
 
-    if options.output_human_stat == True:
+    if options.output_human_stat == True and not megapath_nano.human_assembly_list.empty:
         megapath_nano.human_best_align_stat.sort_values(['sequence_length'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.human_stat', sep='\t', header=True, index=False, columns=align_stat_raw_col_name_by_sequence_id)
-    if options.output_decoy_stat == True:
+    if options.output_decoy_stat == True and not megapath_nano.decoy_assembly_list.empty:
         megapath_nano.decoy_best_align_stat.sort_values(['total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.decoy_stat', sep='\t', header=True, index=False, columns=align_stat_raw_col_name_by_sequence_id)
     if options.output_id_signal == True:
         megapath_nano.id_best_align_stat.sort_values(['adjusted_total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.id_stat', sep='\t', header=True, index=False, columns=align_stat_raw_col_name_by_assembly_id)
@@ -3650,54 +3650,57 @@ def step_format_output(megapath_nano, options):
 
     megapath_nano.best_align_stat.query('adjusted_total_aligned_bp > 0').sort_values(['adjusted_total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.preport', sep='\t', header=True, index=False, columns=align_stat_col_name_dot_report)
     
-    taxon_df=pandas.read_csv('%s/sequence_name' %(megapath_nano.global_options['db_folder']),sep='\t',header=None,names=['sequence_id','name'])
-    if level=='species':
-        taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
-    align_list_species_name=megapath_nano.id_best_align_list.merge(right=taxon_df,on=['sequence_id'],how='left')
-    #update name
-    align_list_species_name=pandas.concat([align_list_species_name[align_list_species_name['name'].isnull()].assign(name=lambda x: x['sequence_id']),align_list_species_name[~align_list_species_name['name'].isnull()]])
+    if FLAGS.reassignment==False:
+        taxon_df=pandas.read_csv(f'{megapath_nano.global_options["db_folder"]}/sequence_name',sep='\t',header=None,names=['sequence_id','name'])
+        if FLAGS.resolution=='species':
+            taxon_df['name']=taxon_df['name'].apply(lambda x: " ".join(x.split(" ",2)[0:2]) if ' sp. ' not in x else " ".join(x.split(" ",3)[0:3]))
+        align_list_species_name=megapath_nano.id_best_align_list.merge(right=taxon_df,on=['sequence_id'],how='left')
+        #update name
+        align_list_species_name=pandas.concat([align_list_species_name[align_list_species_name['name'].isnull()].assign(name=lambda x: x['sequence_id']),align_list_species_name[~align_list_species_name['name'].isnull()]])
+    elif FLAGS.reassignment==True:
+        align_list_species_name=megapath_nano.id_best_align_list
     sequence_id_groupby_count=align_list_species_name.groupby(['name']).count()['read_id'].sort_values(ascending=False)
-    sequence_id_groupby_count.to_csv(path_or_buf=file_prefix_with_path +'species_name.read_count',sep='\t')
+    sequence_id_groupby_count.to_csv(path_or_buf=f'{file_prefix_with_path}.read_count_by_name',sep='\t')
 
-    #testing for sequence id in best_align_stat
-    megapath_nano.sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.assembly_list)
-    megapath_nano.sequence_name = get_sequence_name(db_conn=megapath_nano.taxonomy_db_conn, log=megapath_nano.log, sequence_list=megapath_nano.sequence_list)
-    megapath_nano.best_align_stat_by_sequence_id = generate_align_stat_group_by_sequence_id(
-                                                                                        assembly_metadata=megapath_nano.assembly_metadata,
-                                                                                        log=megapath_nano.log,
-                                                                                        align_list=megapath_nano.best_align_list,
-                                                                                        sequence_info=megapath_nano.sequence_name,
-                                                                                        )
-    megapath_nano.best_align_stat_by_sequence_id.sort_values(['total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.microbe_stat_by_sequence_id', sep='\t', header=True, index=False, columns=align_stat_raw_col_name_by_sequence_id) 
-    megapath_nano.sequence_info = megapath_nano.sequence_list[['assembly_id', 'sequence_id', 'sequence_length']].merge(
-                                                                                                            right=megapath_nano.assembly_info.set_index('assembly_id'),
+    if FLAGS.reassignment==False:
+        #testing for sequence id in best_align_stat
+        megapath_nano.sequence_list = megapath_nano.assembly_metadata.get_sequence_tax_id(assembly_list=megapath_nano.assembly_list)
+        megapath_nano.sequence_name = get_sequence_name(db_conn=megapath_nano.taxonomy_db_conn, log=megapath_nano.log, sequence_list=megapath_nano.sequence_list)
+        megapath_nano.best_align_stat_by_sequence_id = generate_align_stat_group_by_sequence_id(
+                                                                                            assembly_metadata=megapath_nano.assembly_metadata,
+                                                                                            log=megapath_nano.log,
+                                                                                            align_list=megapath_nano.best_align_list,
+                                                                                            sequence_info=megapath_nano.sequence_name,
+                                                                                            )
+        megapath_nano.best_align_stat_by_sequence_id.sort_values(['total_aligned_bp'], ascending=[False]).to_csv(path_or_buf=file_prefix_with_path + '.microbe_stat_by_sequence_id', sep='\t', header=True, index=False, columns=align_stat_raw_col_name_by_sequence_id) 
+        megapath_nano.sequence_info = megapath_nano.sequence_list[['assembly_id', 'sequence_id', 'sequence_length']].merge(
+                                                                                                                right=megapath_nano.assembly_info.set_index('assembly_id'),
+                                                                                                                how='left',
+                                                                                                                left_on='assembly_id',
+                                                                                                                right_index=True,
+                                                                                                                validate='m:1',
+                                                                                                                )
+
+        megapath_nano.best_align_stat_by_sequence_id_with_assembly_info = megapath_nano.best_align_stat_by_sequence_id.merge(
+                                                                                                            right=megapath_nano.sequence_info.set_index('sequence_id'),
                                                                                                             how='left',
-                                                                                                            left_on='assembly_id',
-                                                                                                            right_index=True,
+                                                                                                            left_on='sequence_id',
+                                                                                                            right_index = True,
+                                                                                                            suffixes=['', '_y'],
                                                                                                             validate='m:1',
                                                                                                             )
-
-    megapath_nano.best_align_stat_by_sequence_id_with_assembly_info = megapath_nano.best_align_stat_by_sequence_id.merge(
-                                                                                                        right=megapath_nano.sequence_info.set_index('sequence_id'),
-                                                                                                        how='left',
-                                                                                                        left_on='sequence_id',
-                                                                                                        right_index = True,
-                                                                                                        suffixes=['', '_y'],
-                                                                                                        validate='m:1',
-                                                                                                        )
-    megapath_nano.best_align_stat_by_sequence_id_with_assembly_info = megapath_nano.best_align_stat_by_sequence_id_with_assembly_info.merge(
-                                                                                                        right = megapath_nano.best_align_stat.set_index('assembly_id'),
-                                                                                                        how = 'left',
-                                                                                                        left_on = 'assembly_id',
-                                                                                                        right_index = True,
-                                                                                                        suffixes=['', '_y'],
-                                                                                                        validate='m:1',
-                                                                                                        ).rename(columns={'total_aligned_bp':'sequence_total_aligned_bp', 'average_depth': 'sequence_average_depth','covered_percent': 'sequence_covered_percent', 'adjusted_total_aligned_bp': 'assembly_adjusted_total_aligned_bp', 'adjusted_average_depth': 'assembly_adjusted_average_depth', 'adjusted_covered_percent': 'assembly_adjusted_covered_percent'})
+        megapath_nano.best_align_stat_by_sequence_id_with_assembly_info = megapath_nano.best_align_stat_by_sequence_id_with_assembly_info.merge(
+                                                                                                            right = megapath_nano.best_align_stat.set_index('assembly_id'),
+                                                                                                            how = 'left',
+                                                                                                            left_on = 'assembly_id',
+                                                                                                            right_index = True,
+                                                                                                            suffixes=['', '_y'],
+                                                                                                            validate='m:1',
+                                                                                                            ).rename(columns={'total_aligned_bp':'sequence_total_aligned_bp', 'average_depth': 'sequence_average_depth','covered_percent': 'sequence_covered_percent', 'adjusted_total_aligned_bp': 'assembly_adjusted_total_aligned_bp', 'adjusted_average_depth': 'assembly_adjusted_average_depth', 'adjusted_covered_percent': 'assembly_adjusted_covered_percent'})
+        
+        megapath_nano.best_align_stat_by_sequence_id_with_assembly_info.reindex(columns = align_stat_raw_col_name_by_sequence_id_with_assembly_id).to_csv(path_or_buf=file_prefix_with_path + '.microbe_stat_by_sequence_id_assembly_info', sep='\t', header=True, index=False)
     
-    #megapath_nano.best_align_stat_by_sequence_id_with_assembly_info.to_csv(path_or_buf=file_prefix_with_path + '.microbe_stat_with_sequence_id_assembly_info.full', sep='\t', header=True, index=False)
-    megapath_nano.best_align_stat_by_sequence_id_with_assembly_info.to_csv(path_or_buf=file_prefix_with_path + '.microbe_stat_by_sequence_id_assembly_info', sep='\t', header=True, index=False, columns=align_stat_raw_col_name_by_sequence_id_with_assembly_id)
-    
-	#Independent megapath_nano report for plasmids
+    #Independent megapath_nano report for plasmids
     #megapath_nano.best_align_stat.to_csv(path_or_buf=file_prefix_with_path + '.micro.info', sep='\t', header=True, index=False)
     #megapath_nano.decoy_best_align_stat.to_csv(path_or_buf=file_prefix_with_path + '.plasmid.info', sep='\t', header=True, index=False)
     #end of Independent megapath_nano report for plasmids
@@ -4201,65 +4204,92 @@ def main():
         human_and_decoy_filter.O.microbe_best_align_list = placement_to_species.O.best_align_list
 
 
-    # step 4: 'placement_to_assembly': align reads that best align to a species to all assembly of the species and then choose the best assembly
-
-    placement_to_assembly = IO_Container()
-
-    placement_to_assembly.I.query_filename_list = human_and_decoy_filter.O.query_filename_list
-    placement_to_assembly.I.species_list = placement_to_species.O.selected_species_list
-    placement_to_assembly.I.read_id_species_id = placement_to_species.O.read_id_species_id
-    placement_to_assembly.I.target_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['assembly'])
-    placement_to_assembly.I.species_id_assembly_id = placement_to_species.I.target_assembly_list[['assembly_id']]
-
-    megapath_nano.log.print('Assembly identification genome set: ' + megapath_nano.global_options['assembly'])
-
-    step_placement_to_assembly(megapath_nano, placement_to_assembly)
-
-    # Output
-    # placement_to_assembly.O.align_list           		format: align_list_col_name
-    # placement_to_assembly.O.num_assembly_candidate
+    if FLAGS.assembly_selection == True:
+        # step X: 'placement_to_assembly': align reads that best align to a species to all assembly of the species and then choose the best assembly
 
 
-    # step 5: 'assembly_selection': align reads that best align to a species to all assembly of the species and then choose the best assembly
 
-    assembly_selection = IO_Container()
+        placement_to_assembly.I.query_filename_list = human_and_decoy_filter.O.query_filename_list
+        placement_to_assembly.I.species_list = placement_to_species.O.selected_species_list
+        placement_to_assembly.I.read_id_species_id = placement_to_species.O.read_id_species_id
+        placement_to_assembly.I.target_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['assembly'])
+        placement_to_assembly.I.species_id_assembly_id = placement_to_species.I.target_assembly_list[['assembly_id']]
 
-    assembly_selection.I.species_list = placement_to_species.O.selected_species_list
-    assembly_selection.I.assembly_align_list = placement_to_assembly.O.align_list
-    assembly_selection.I.species_align_list = placement_to_species.O.align_list
-    assembly_selection.I.assembly_ID_min_average_depth = megapath_nano.global_options['assembly_id_min_average_depth']
-    assembly_selection.I.good_align_threshold = megapath_nano.global_options['good_alignment_threshold']
-    assembly_selection.I.read_id_species_id = placement_to_species.O.read_id_species_id
+        megapath_nano.log.print('Assembly identification genome set: ' + megapath_nano.global_options['assembly'])
 
-    step_assembly_selection(megapath_nano, assembly_selection)
+        step_placement_to_assembly(megapath_nano, placement_to_assembly)
 
-    # Output
-    # assembly_selection.O.align_stat       	format: align_stat_col_name
-    # assembly_selection.O.align_list       	format: align_stat_col_name
-    # assembly_selection.O.best_align_list  	format: align_stat_col_name
-    # assembly_selection.O.good_align_list  	format: align_stat_col_name
-    # assembly_selection.O.assembly_list    	format: align_stat_col_name
+        # Output
+        # placement_to_assembly.O.align_list           		format: align_list_col_name
+        # placement_to_assembly.O.num_assembly_candidate
 
 
-    # step 6: 'align_assembly_set': align filtered reads to assembly_set
+        # step X: 'assembly_selection': align reads that best align to a species to all assembly of the species and then choose the best assembly
 
-    align_assembly_set = IO_Container()
+        assembly_selection = IO_Container()
 
-    align_assembly_set.I.query_filename_list = human_and_decoy_filter.O.query_filename_list
-    align_assembly_set.I.assembly_list = assembly_selection.O.assembly_list[['assembly_id']]
-    align_assembly_set.I.species_id_assembly_id = placement_to_species.I.target_assembly_list[['assembly_id']]
-    align_assembly_set.I.species_align_list = placement_to_species.O.align_list
-    
-    if FLAGS.output_PAF == True:
-        align_assembly_set.I.paf_path_and_prefix = os.path.join(megapath_nano.output_folder, megapath_nano.output_prefix + '.assembly')
+        assembly_selection.I.species_list = placement_to_species.O.selected_species_list
+        assembly_selection.I.assembly_align_list = placement_to_assembly.O.align_list
+        assembly_selection.I.species_align_list = placement_to_species.O.align_list
+        assembly_selection.I.assembly_ID_min_average_depth = megapath_nano.global_options['assembly_id_min_average_depth']
+        assembly_selection.I.good_align_threshold = megapath_nano.global_options['good_alignment_threshold']
+        assembly_selection.I.read_id_species_id = placement_to_species.O.read_id_species_id
+
+        step_assembly_selection(megapath_nano, assembly_selection)
+
+        # Output
+        # assembly_selection.O.align_stat       	format: align_stat_col_name
+        # assembly_selection.O.align_list       	format: align_stat_col_name
+        # assembly_selection.O.best_align_list  	format: align_stat_col_name
+        # assembly_selection.O.good_align_list  	format: align_stat_col_name
+        # assembly_selection.O.assembly_list    	format: align_stat_col_name
+
+
+        # step X: 'align_assembly_set': align filtered reads to assembly_set
+
+        align_assembly_set = IO_Container()
+
+        align_assembly_set.I.query_filename_list = human_and_decoy_filter.O.query_filename_list
+        align_assembly_set.I.assembly_list = assembly_selection.O.assembly_list[['assembly_id']]
+        align_assembly_set.I.species_id_assembly_id = placement_to_species.I.target_assembly_list[['assembly_id']]
+        align_assembly_set.I.species_align_list = placement_to_species.O.align_list
+        
+        if FLAGS.output_PAF == True:
+            align_assembly_set.I.paf_path_and_prefix = os.path.join(megapath_nano.output_folder, megapath_nano.output_prefix + '.assembly')
+        else:
+            align_assembly_set.I.paf_path_and_prefix = None
+
+        step_align_assembly_set(megapath_nano, align_assembly_set)
+
+        # Output
+        # align_assembly_set.O.align_list       	format: align_list_col_name
+        # align_assembly_set.O.best_align_list  	format: align_list_col_name
     else:
-        align_assembly_set.I.paf_path_and_prefix = None
+        placement_to_assembly = IO_Container()
+        placement_to_assembly.I.target_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['assembly'])
+        
+        assembly_selection = IO_Container()
+        species_align_stat = align_list_to_align_stat_by_assembly_id(
+                                                                 assembly_metadata=megapath_nano.assembly_metadata,
+                                                                 log=megapath_nano.log,
+                                                                 align_list=placement_to_species.O.align_list
+                                                                )
+        species_align_stat = species_align_stat.sort_values(['species_tax_id', 'adjusted_average_depth', 'alignment_score_tiebreaker']).drop_duplicates(subset=['species_tax_id'], keep='last')
+        species_align_stat = species_align_stat.merge(
+                                                      right=placement_to_species.O.selected_species_list[['species_tax_id']].set_index('species_tax_id'),
+                                                      how='inner',
+                                                      left_on='species_tax_id',
+                                                      right_index = True,
+                                                      suffixes=['', '_y'],
+                                                      validate='1:1',
+                                                     )
 
-    step_align_assembly_set(megapath_nano, align_assembly_set)
+        assembly_selection.O.best_align_list = placement_to_species.O.best_align_list
+        assembly_selection.O.assembly_list = species_align_stat.sort_values(['species_tax_id', 'adjusted_average_depth', 'alignment_score_tiebreaker']).drop_duplicates(subset=['species_tax_id'], keep='last').copy()
 
-    # Output
-    # align_assembly_set.O.align_list       	format: align_list_col_name
-    # align_assembly_set.O.best_align_list  	format: align_list_col_name
+        align_assembly_set = IO_Container()
+        align_assembly_set.O.align_list=placement_to_species.O.align_list
+        align_assembly_set.O.best_align_list=placement_to_species.O.best_align_list
 
 
     # step 7: 'raw_stat': assembly raw best align list
@@ -4811,19 +4841,19 @@ if __name__ == '__main__':
     group_variable_region_adjustment.add_argument('--no-variable_region_adjustment', dest='variable_region_adjustment', action='store_false')
 
     group_spike_filter = parser.add_mutually_exclusive_group(required=False)
-    group_spike_filter.add_argument('--spike_filter', dest='spike_filter', action='store_true')
+    group_spike_filter.add_argument('--spike_filter', dest='spike_filter', action='store_true', help='beta version')
     group_spike_filter.add_argument('--no-spike_filter', dest='spike_filter', action='store_false')
 
     group_closing_spike_filter = parser.add_mutually_exclusive_group(required=False)
-    group_closing_spike_filter.add_argument('--closing_spike_filter', dest='closing_spike_filter', action='store_true')
+    group_closing_spike_filter.add_argument('--closing_spike_filter', dest='closing_spike_filter', action='store_true', help='beta version')
     group_closing_spike_filter.add_argument('--no-closing_spike_filter', dest='closing_spike_filter', action='store_false')
 
     group_human_repetitive_region_filter = parser.add_mutually_exclusive_group(required=False)
-    group_human_repetitive_region_filter.add_argument('--human_repetitive_region_filter', dest='human_repetitive_region_filter', action='store_true')
+    group_human_repetitive_region_filter.add_argument('--human_repetitive_region_filter', dest='human_repetitive_region_filter', action='store_true', help='beta version')
     group_human_repetitive_region_filter.add_argument('--no-human_repetitive_region_filter', dest='human_repetitive_region_filter', action='store_false')
 
     group_microbe_repetitive_region_filter = parser.add_mutually_exclusive_group(required=False)
-    group_microbe_repetitive_region_filter.add_argument('--microbe_repetitive_region_filter', dest='microbe_repetitive_region_filter', action='store_true')
+    group_microbe_repetitive_region_filter.add_argument('--microbe_repetitive_region_filter', dest='microbe_repetitive_region_filter', action='store_true', help='beta version')
     group_microbe_repetitive_region_filter.add_argument('--no-microbe_repetitive_region_filter', dest='microbe_repetitive_region_filter', action='store_false')
 
     group_short_alignment_filter = parser.add_mutually_exclusive_group(required=False)
@@ -4864,8 +4894,12 @@ if __name__ == '__main__':
     group_reassignment.add_argument('--no-reassignment', dest='reassignment', action='store_false')
 
     group_reassignment = parser.add_mutually_exclusive_group(required=False)
+    group_reassignment.add_argument('--assembly_selection', dest='assembly_selection', action='store_true')
+    group_reassignment.add_argument('--no-assembly_selection', dest='assembly_selection', action='store_false')
+
+    group_reassignment = parser.add_mutually_exclusive_group(required=False)
     group_reassignment.add_argument('--species_level', dest='resolution', action='store_const',const='species')
-    group_reassignment.add_argument('--strain_level', dest='resolution', action='store_const',const='strain')
+    group_reassignment.add_argument('--strain_level', dest='resolution', action='store_const',const='strain', help='beta version')
     # Set up for output options
 
     group_output_adaptor_trimmed_query = parser.add_mutually_exclusive_group(required=False)
@@ -4931,6 +4965,7 @@ if __name__ == '__main__':
     parser.set_defaults(read_filter=True)
     parser.set_defaults(human_filter=False)
     parser.set_defaults(decoy_filter=False)
+    parser.set_defaults(assembly_selection=False)
     parser.set_defaults(variable_region_adjustment=False)
     parser.set_defaults(spike_filter=False)
     parser.set_defaults(human_repetitive_region_filter=False)
@@ -4977,20 +5012,20 @@ if __name__ == '__main__':
     NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     parser.add_argument('--temp_folder', help='temporary folder', default='')
     parser.add_argument('--RAM_folder', help='temporary folder in RAM', default='/run/shm')
-    parser.add_argument('--taxonomy_db', help='taxonomy database', default='%s/db/ncbi_taxonomy.db'%(NANO_DIR))
-    parser.add_argument('--tool_folder', help='Tool folder', default='%s/tools'%(CWD))
-    parser.add_argument('--config_folder', help='Config file folder', default='%s/config'%(NANO_DIR))
-    parser.add_argument('--assembly_folder', help='Assembly folder', default='%s/genomes'%(NANO_DIR))
-    parser.add_argument('--db_folder', help='Db folder', default='%s/db'%(NANO_DIR))
+    parser.add_argument('--taxonomy_db', help='taxonomy database', default=f'{NANO_DIR}/db/ncbi_taxonomy.db')
+    parser.add_argument('--tool_folder', help='Tool folder', default=f'{CWD}/tools')
+    parser.add_argument('--config_folder', help='Config file folder', default=f'{NANO_DIR}/config')
+    parser.add_argument('--assembly_folder', help='Assembly folder', default=f'{NANO_DIR}/genomes')
+    parser.add_argument('--db_folder', help='Db folder', default=f'{NANO_DIR}/db')
     parser.add_argument('--aligner', help='Aligner program', default='minimap2')
-    parser.add_argument('--read_simulator', help='Read simulation program', default='%s/tools/nanosim/simulator.py'%(CWD))
-    parser.add_argument('--read_simulation_profiles', help='Read simulation profiles', default='%s/tools/nanosim/nanosim_profiles'%(CWD))
+    parser.add_argument('--read_simulator', help='Read simulation program', default=f'{CWD}/tools/nanosim/simulator.py')
+    parser.add_argument('--read_simulation_profiles', help='Read simulation profiles', default=f'{CWD}/tools/nanosim/nanosim_profiles')
     parser.add_argument('--aligner_log', help='Log for stderr output from aligner program', default='minimap2.log')
     parser.add_argument('--read_sim_log', help='Log for stderr output from read simulator', default='read_sim.log')
     parser.add_argument('--adaptor_trimming_log', help='Log for stdout output from adaptor trimming program', default='adaptor_trimming.log')
     parser.add_argument('--python', help='Python entry point', default='python3')
 
-    parser.add_argument('--human_repetitive_region_filter_assembly_id', help='Assembly ID for human similar region filter', default='GCF_000001405.37')
+    parser.add_argument('--human_repetitive_region_filter_assembly_id', help='Assembly ID for human similar region filter', default='GCF_000001405.39')
 
     parser.add_argument('--max_aligner_thread', help='Maximum number of threads used by aligner', type=int, default=64)
     parser.add_argument('--max_porechop_thread', help='Maximum number of threads used by porechop', type=int, default=64)
@@ -5014,11 +5049,11 @@ if __name__ == '__main__':
     parser.add_argument('--decoy_filter_alignment_score_percent_threshold', help='Alignment score (normalized by read length) threshold (in percent) for flagging a read as a decoy read', type=int, default=100)
 
     # species_ID
-    parser.add_argument('--species_id_min_aligned_bp', help='Min aligned BP to include a species for analysis', type=int, default=0)
+    parser.add_argument('--species_id_min_aligned_bp', help='Min aligned base pairs to include a species for analysis', type=int, default=0)
 
     # assembly_ID
     parser.add_argument('--good_alignment_threshold', help='Alignment score threshold in percentage of best alignment score', type=int, default=80)
-    parser.add_argument('--assembly_id_min_average_depth', help='Min average depth to perform assembly selection (default skip assembly selection)', type=float, default=10000)
+    parser.add_argument('--assembly_id_min_average_depth', help='Min average depth to perform assembly selection (default skip assembly selection)', type=float, default=0.5)
 
     # variable_region_adjustment
     parser.add_argument('--variable_region_percent', help='Maximum percentage of strands aligned for a region to be labeled as variable', type=int, default=50)
