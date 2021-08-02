@@ -36,8 +36,8 @@ sudo docker run -it mpn_image /bin/bash
 
 ## Option 1: Download zip
 ```
-wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano_db.tar.gz
-tar -xvzf MegaPath-Nano_db.tar.gz
+wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano_db.v1.0.tar.gz
+tar -xvzf MegaPath-Nano_db.v1.0.tar.gz
 ```
 
 ## Option 2: Download online
