@@ -19,9 +19,7 @@ conda create -n mpn python=3.6
 conda activate mpn
 
 # installing all dependencies for both modules
-conda install pandas==0.23 psutil pybedtools porechop bioconvert seqtk minimap2 bcftools samtools pysam tabulate cgecore ncbi-amrfinderplus
-pip install --force-reinstall -v biopython==1.72  #for compatibility until an update of rgi
-pip install git+https://github.com/arpcard/rgi.git pyfaidx pyahocorasick seaborn
+conda install pandas==1.1.5 psutil==5.6.5 pybedtools==0.8.0 porechop==0.2.4 bioconvert==0.4.3 seqtk==1.3 minimap2==2.21 bcftools==1.9 samtools==1.9 pysam==0.16.0 tabulate==0.8.9 cgecore==1.5.6 ncbi-amrfinderplus==3.10.5 rgi==5.2.0 biopython==1.72 pyahocorasick==1.1.7 filetype==1.0.7libdeflate==1.6
 
 # git clone MegaPath-Nano
 git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano
@@ -35,7 +33,15 @@ sudo docker run -it mpn_image /bin/bash
 ```
 
 ## Database Installation
-To use MegaPath-Nano, users need to download RefSeq database and build index first. Script for database preparation is under db_preparation/. 
+
+## Option 1: Download zip
+```
+wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano_db.tar.gz
+tar -xvzf MegaPath-Nano_db.tar.gz
+```
+
+## Option 2: Download online
+Alternatively, the latest RefSeq database can be downloaded with the scripts under db_preparation/. 
 ```
 # Taxon
 # download RefSeq:
