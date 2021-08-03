@@ -37,41 +37,26 @@ def process_accession_num(bam_path,FLAGS):
     """
     """
     bam_basename=os.path.basename(bam_path)
-    #consensus_subprocess=subprocess.Popen(
-    #        f"bedtools bamtobed -i {bam_path} |bedops -m - > {bam_basename}.merged.bed;"
-    #        f"bedops -d ref.bed {bam_basename}.merged.bed > {bam_basename}.0cov.bed;"
-    #        f"bcftools mpileup --threads {FLAGS.threads} -R {bam_basename}.merged.bed -Ou -f ref.fa {bam_path} | bcftools call --threads {FLAGS.threads} -Oz -mv -o calls.vcf.gz;"
-    #        "tabix calls.vcf.gz;"
-    #        f"cat ref.fa | bcftools consensus -m {bam_basename}.0cov.bed calls.vcf.gz |seqtk cutN - > cns.fa",shell=True)
-    #consensus_subprocess.communicate()
+    consensus_subprocess=subprocess.Popen(
+            f"bedtools bamtobed -i {bam_path} |bedops -m - > {bam_basename}.merged.bed;"
+            f"bedops -d ref.bed {bam_basename}.merged.bed > {bam_basename}.0cov.bed;"
+            f"bcftools mpileup --threads {FLAGS.threads} -R {bam_basename}.merged.bed -Ou -f ref.fa {bam_path} | bcftools call --threads {FLAGS.threads} -Oz -mv -o calls.vcf.gz;"
+            "tabix calls.vcf.gz;"
+            f"cat ref.fa | bcftools consensus -m {bam_basename}.0cov.bed calls.vcf.gz |seqtk cutN - > cns.fa",shell=True)
+    consensus_subprocess.communicate()
 
     os.makedirs("results/resf", exist_ok=True)
-    r_subprocess = subprocess.Popen(f'python {FLAGS.NANO_DIR_PATH}/bin/resfinder/resfinder.py -p {FLAGS.NANO_DIR_PATH}/bin/amr_db/resfinder/ -i cns.fa -o results/resf -x',shell=True)#&& ' + \
-            #reformat_command + f' results/{acc_id}/resf/results_tab.txt > results/{acc_id}/resf/resf_temp.txt && ' + \
-            #f"awk -F'\\t' -vOFS=, '{{gsub(\" resistance\", \"\");split($1,a,\", \"); for (i in a) print a[i]\"\\t\"$2\"\\t\"$3}}'  results/{acc_id}/resf/resf_temp.txt >  results/{acc_id}/resf/resf_temp2.txt"+ ' && ' + \
-            #f"awk -F'\\t' -vOFS=, '{{split($1,a,\"and \"); for (i in a) if(a[i]==\"\") {{}} else {{ print a[i]\"\\t\"$2\"\\t\"$3}} ;}}'  results/{acc_id}/resf/resf_temp2.txt >  results/{acc_id}/resf/resf.txt", shell=True)
-
-
-
+    r_subprocess = subprocess.Popen(f'python {FLAGS.NANO_DIR_PATH}/bin/resfinder/resfinder.py -p {FLAGS.NANO_DIR_PATH}/bin/amr_db/resfinder/ -i cns.fa -o results/resf -x',shell=True)
     os.makedirs("results/card", exist_ok=True)
-    c_subprocess = subprocess.Popen(f'rgi main --input_sequence cns.fa --output_file results/card/results_tab.tsv --input_type contig -n {FLAGS.threads}',shell=True)#&& '
-    #    "awk -F'\t' 'NR>1{{print $15 \"\\t\" $9 \"\\t\" $10}}' results/{acc_id}/card/results.txt > results/{acc_id}/card/card_temp.txt && "
-    #    "awk -F'\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/card/card_temp.txt > results/{acc_id}/card/card.txt", shell=True)
-
-
+    c_subprocess = subprocess.Popen(f'rgi main --input_sequence cns.fa --output_file results/card/results_tab.tsv --input_type contig -n {FLAGS.threads}',shell=True)
     os.makedirs("results/amrf", exist_ok=True )
     add_flag=''
     if FLAGS.taxon != None:
         add_flag='-O '+FLAGS.taxon
-    a_subprocess = subprocess.Popen(f'amrfinder {add_flag} -n cns.fa > results/amrf/results_tab.tsv',shell=True)#&& ' 
-    #            "awk -F'\\t' 'NR>1{{print $12 \"\\t\" $6 \"\\t\" $17}}' results/{acc_id}/amrf/results.txt > results/{acc_id}/amrf/amrf_temp.txt && " 
-    #            "awk -F'\\t' -vOFS=, '{{split($1,a,\"; \"); for (i in a) if(a[i] !~ /antibiotic/){{print a[i]\"\\t\"$2\"\\t\"$3}} else {{split(a[i],b,\" \"); print b[1]\"\\t\"$2\"\\t\"$3}} ;}}' results/{acc_id}/amrf/amrf_temp.txt > results/{acc_id}/amrf/amrf.txt", shell=True)
+    a_subprocess = subprocess.Popen(f'amrfinder {add_flag} -n cns.fa > results/amrf/results_tab.tsv',shell=True)
     os.makedirs("results/megares", exist_ok=True )
-    #m_subprocess = subprocess.Popen(f'python {FLAGS.NANO_DIR_PATH}/bin/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/megares/ -d megares_full_database_v2.00 -p {bin_dir}/amr_db/megares -l 0.9 -t 0.6  && {reformat_command} results/{acc_id}/megares/results_tab.txt > results/{acc_id}/megares/megares.txt', shell=True)
     m_subprocess = subprocess.Popen(f'blastn -subject {FLAGS.NANO_DIR_PATH}/bin/amr_db/megares/megares_full_database_v2.00.fsa -query cns.fa -out results/megares/results_tab.tsv -outfmt "6 qseqid sseqid pident qcovs" -qcov_hsp_perc {FLAGS.blast_qcov_hsp_perc} -perc_identity {FLAGS.blast_perc_identity}',shell=True)
-
     os.makedirs("results/cbmar", exist_ok=True )
-    #cbmar_nucl_subprocess = subprocess.Popen(f'python {FLAGS.NANO_DIR_PATH}/bin/blast_amr.py -i cns_{acc_id}.fa -o results/{acc_id}/cbmar/ -d cbmar_nucl -p {bin_dir}/amr_db/cbmar && {reformat_command} results/{acc_id}/cbmar/results_tab.txt > results/{acc_id}/cbmar/cbmar.txt', shell=True)
     cbmar_nucl_subprocess = subprocess.Popen(f'blastn -subject {FLAGS.NANO_DIR_PATH}/bin/amr_db/cbmar/cbmar_nucl.fsa -query cns.fa -out results/cbmar/results_tab.tsv -outfmt "6 qseqid sseqid pident qcovs" -qcov_hsp_perc {FLAGS.blast_qcov_hsp_perc} -perc_identity {FLAGS.blast_perc_identity}',shell=True)
     cbmar_prot_subprocess = subprocess.Popen('prodigal -m -a cns.prot.fa -i cns.fa && '
             f'blastp -query cns.prot.fa -out cns.prot.fa.blast.txt -db {FLAGS.CBMAR_PROT_DB_PATH} -outfmt "6 qseqid sseqid pident qcovs"', shell=True)
