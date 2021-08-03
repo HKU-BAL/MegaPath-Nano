@@ -8,7 +8,9 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Prerequisites
 
-## Option 1: Conda Virtual Environment Setup
+## Option 1: Bioconda
+
+## Option 2: Conda Virtual Environment Setup
 ```
 # prioritize channels
 conda config --add channels defaults
@@ -23,30 +25,34 @@ conda install pandas==1.1.5 psutil==5.6.5 pybedtools==0.8.0 porechop==0.2.4 bioc
 
 # git clone MegaPath-Nano
 git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano
-cd MegaPath-Nano
 ```
 
-## Option 2: Docker
+## Option 3: Docker
 ```
 sudo docker build -f ./Dockerfile -t mpn_image . 
 sudo docker run -it mpn_image /bin/bash
 ```
 
-## Database Installation
 
-## Option 1: Download zip
+
+## Download Zipped Database
 ```
+# Option 1, Bioconda: cd ${CONDA_PREFIX}/MegaPath-Nano
+# Option 2, Conda Virtual Env: cd ./MegaPath-Nano (the git clone)
+# Option 3, Docker: cd /opt/MegaPath-Nano
+cd ${MEGAPATH_NANO_DIR}
+
 # Taxon
 wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano_db.v1.0.tar.gz
 tar -xvzf MegaPath-Nano_db.v1.0.tar.gz
 
 # AMR
-rgi load --card_json card/card.json
+rgi load --card_json bin/amr_db/card/card.json
 amrfinder -u
 ```
 
-## Option 2: Download online
-Alternatively, the latest RefSeq database can be downloaded with the scripts under db_preparation/. 
+## Alternative: Online Database Installation
+The latest RefSeq database can be downloaded with the scripts under db_preparation/. 
 ```
 # Taxon
 # download RefSeq:
