@@ -9,6 +9,16 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 ## Prerequisites
 
 ## Option 1: Bioconda
+```
+# prioritize channels
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+conda create -n mpn -c bioconda megapath-nano
+conda activate mpn
+```
+
 
 ## Option 2: Conda Virtual Environment Setup
 ```
