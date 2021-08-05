@@ -96,95 +96,10 @@ def format_blast_output(in_path):
                 ID_str=f'{ID_str};{ID}'
             fo.write(f'{drug}\t{header_str}\t{ID_str}\n')
 
-def parse_output_deprecate(db_acc_id,db_gene,db_score,db_name):
-    if os.path.isfile(f"results/{db_name}/{db_name}.txt") and os.path.getsize(f"results/{db_name}/{db_name}.txt"):
-        with open(f"results/{db_name}/{db_name}.txt") as f:
-            for line in f:
-                col = line.split("\t")
-                drug=col[0].lower().strip()
-                if drug.endswith('s'):
-                    drug = drug[:-1]
-                if drug not in db_acc_id:
-                    db_acc_id[drug] = acc_id
-                    db_gene[drug] = col[1]
-                    db_score[drug] = col[2].strip()
-                else:
-                    if acc_id not in db_acc_id[drug]:
-                        db_acc_id[drug] = db_acc_id[drug] + "|" + acc_id
-                        db_gene[drug] = db_gene[drug] + "|"
-                        db_score[drug] = db_score[drug] + "|"
-
-                    if col[1].strip() != "":
-                        if db_gene[drug][-1] != "|":
-                            db_gene[drug] = db_gene[drug] + ";" + col[1]
-                            db_score[drug] = db_score[drug] + ";" + col[2].strip()
-                        elif db_gene[drug][-1] == "|":
-                            db_gene[drug] = db_gene[drug] + col[1]
-                            db_score[drug] = db_score[drug] + col[2].strip()
-
 def canonicalize(name):
     if name.endswith('s'):
         name=name[:-1]
     return name.replace('-','').upper()
-
-def parse_output_col(db_acc_id,db_gene,db_score,db_path):
-    if os.path.isfile(f"results/{db_path}") and os.path.getsize(f"results/{db_path}"):
-        with open(f"results/{db_path}") as f:
-            if any(db in db_path for db in ('card','resf','amrf')):
-                next(f)
-            for line in f:
-                if 'card' in db_path:
-                    col=line.split('\t')
-                    gene=col[8]
-                    id_score=col[9]
-                    acc_id=col[1]
-                    drug=col[14]
-                    #acc_id=acc_id.split(':')[0]
-                elif 'resf' in db_path:
-                    col=line.split('\t')
-                    gene=col[1]
-                    id_score=col[2]
-                    acc_id=col[4]
-                    drug=col[0]
-                elif 'amrf' in db_path:
-                    col=line.split('\t')
-                    gene=col[5]
-                    id_score=col[16]
-                    acc_id=col[1]
-                    drug=col[11]
-                    #acc_id=acc_id.split(':')[0]
-                elif 'megares' in db_path:
-                    #put arg
-                    drug_class=["Aminocoumarins", "Aminoglycosides", "Bacitracin", "betalactams", "Cationic_antimicrobial_peptides", "Elfamycins", "Fluoroquinolones", "Fosfomycin", "Fusidic_acid", "Glycopeptides", "Lipopeptides", "Metronidazole", "MLS", "Multi-drug_resistance", "Mycobacterium_tuberculosis-specific_Drug", "Phenicol", "Rifampin", "Sulfonamides", "Tetracyclines", "Thiostrepton", "Trimethoprim", "Tunicamycin"]
-                    drug_dict=dict()
-                    acc_id,gene,id_score=line.split('\t')[0:3]
-                    #acc_id=acc_id.split(':')[0]
-                    for pheno in drug_class:
-                        if pheno in gene:
-                            drug=pheno
-                            break
-                elif 'cbmar' in db_path:
-                    drug="BETALACTAMASE"
-                    acc_id,gene,id_score=line.split('\t')[0:3]
-                    #acc_id=acc_id.split(':')[0]
-                drug=canonicalize(drug)
-                if drug not in db_acc_id:
-                    db_acc_id[drug] = acc_id
-                    db_gene[drug] = gene
-                    db_score[drug] = id_score.strip()
-                elif drug in db_acc_id:
-                    if acc_id not in db_acc_id[drug]:
-                        db_acc_id[drug] = f'{db_acc_id[drug]}:{acc_id}'
-                        db_gene[drug] = f'{db_gene[drug]}:'
-                        db_score[drug] = f'{db_score[drug]}:'
-
-                    if gene.strip() != "":
-                        if db_gene[drug][-1] != ":":
-                            db_gene[drug] = f'{db_gene[drug]};{gene}'
-                            db_score[drug] = f'{db_score[drug]};{id_score}'
-                        elif db_gene[drug][-1] == ":":
-                            db_gene[drug] = f'{db_gene[drug]}{gene}'
-                            db_score[drug] = f'{db_score[drug]}{id_score}'
 
 def parse_output(db_acc_id,db_gene_idscore,db_path):
     if os.path.isfile(f"results/{db_path}") and os.path.getsize(f"results/{db_path}"):
