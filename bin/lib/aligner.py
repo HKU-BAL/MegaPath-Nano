@@ -236,7 +236,7 @@ def Align(*,
             bam_operation_command+=f'python {os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
         if taxon_and_AMR_module_option=='AMR_module_only':
-            sys.exit('Finished alignment step.')
+            os.sys.exit('Finished alignment step.')
         convert=SAM2PAF(sam_filename,paf_filename)
         convert(pri_only=False)
         awk_stdin= os.open(paf_filename, flags=os.O_RDONLY)
