@@ -1269,7 +1269,7 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               mapping_only=megapath_nano.global_options['mapping_only'],
                                               taxon_and_AMR_module_option=FLAGS.taxon_and_AMR_module_option,
                                               align_concat_fa=True,
-                                              AMR_output_folder=f'{megapath_nano.output_folder}/AMR/')
+                                              AMR_output_folder=f'{megapath_nano.output_folder}/{file_prefix_with_path}_amr/')
     if megapath_nano.global_options['debug'] == True:
         placement_to_species.O.align_list.to_csv(path_or_buf=file_prefix_with_path + '.species_align_list', sep='\t', header=True, index=False)
 
