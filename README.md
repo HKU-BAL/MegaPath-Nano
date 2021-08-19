@@ -45,7 +45,7 @@ sudo docker run -it mpn_image /bin/bash
 
 
 
-## Preprocessed Database Download
+## Pre-built Database Download
 ```
 # Option 1, Bioconda: cd ${CONDA_PREFIX}/MegaPath-Nano
 # conda info --env can show the ${CONDA_PREFIX} in the current environment.
