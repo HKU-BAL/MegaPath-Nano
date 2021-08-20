@@ -3913,8 +3913,10 @@ def main():
                                'human_repetitive_region_filter_assembly_id':FLAGS.human_repetitive_region_filter_assembly_id,
 
                                'max_aligner_thread':FLAGS.max_aligner_thread,
+                               'max_aligner_target_GBase_per_batch':FLAGS.max_aligner_target_GBase_per_batch,
                                'max_porechop_thread':FLAGS.max_porechop_thread,
                                'max_AMR_thread':FLAGS.max_AMR_thread,
+
 
                                'genus_height':FLAGS.genus_height,
 
@@ -4011,9 +4013,10 @@ def main():
 
     num_core = psutil.cpu_count(logical=True)
     ram_available = psutil.virtual_memory().available
-    megapath_nano.global_options['max_target_GBase_per_batch'] = ram_available // 1024 // 1024 // 1024 // 8 
+    if megapath_nano.global_options['max_aligner_target_GBase_per_batch']=='auto':
+        megapath_nano.global_options['max_aligner_target_GBase_per_batch'] = str(ram_available // 1024 // 1024 // 1024 // 8 )
 
-    megapath_nano.global_options['alignerThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_aligner_thread'])) + ' -I ' + str(megapath_nano.global_options['max_target_GBase_per_batch']) + 'G'
+    megapath_nano.global_options['alignerThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_aligner_thread'])) + ' -I ' + megapath_nano.global_options['max_aligner_target_GBase_per_batch'] + 'G'
     megapath_nano.global_options['porechopThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_porechop_thread']))
     megapath_nano.global_options['AMRThreadOption'] = str(min(num_core, megapath_nano.global_options['max_AMR_thread']))
 
@@ -5029,6 +5032,7 @@ if __name__ == '__main__':
     parser.add_argument('--human_repetitive_region_filter_assembly_id', help='Assembly ID for human similar region filter', default='GCF_000001405.39')
 
     parser.add_argument('--max_aligner_thread', help='Maximum number of threads used by aligner', type=int, default=64)
+    parser.add_argument('--max_aligner_target_GBase_per_batch', help='Maximum size of reference loaded in memory per batch by aligner', default='auto')
     parser.add_argument('--max_porechop_thread', help='Maximum number of threads used by porechop', type=int, default=64)
     parser.add_argument('--max_AMR_thread', help='Maximum number of threads used by AMR module', type=int, default=64)
 
