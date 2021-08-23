@@ -8,6 +8,8 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Prerequisites
 
+Storage requirement: ~80G
+
 ## Option 1: Bioconda
 ```
 # prioritize channels
