@@ -96,9 +96,14 @@ def format_blast_output(in_path):
                 ID_str=f'{ID_str};{ID}'
             fo.write(f'{drug}\t{header_str}\t{ID_str}\n')
 
+def remove_endswith(name,suffixes):
+    for suffix in suffixes:
+        if name.endswith(suffix):
+            name=name[:-len(suffix)]
+    return name
+
 def canonicalize(name):
-    if name.endswith('s'):
-        name=name[:-1]
+    name=remove_endswith(name,['s',' antibiotic'])
     return name.replace('-','').upper()
 
 def parse_output(db_acc_id,db_gene_idscore,db_path):
@@ -106,6 +111,7 @@ def parse_output(db_acc_id,db_gene_idscore,db_path):
         with open(f"results/{db_path}") as f:
             if any(db in db_path for db in ('card','resf','amrf')):
                 next(f)
+            drug=''
             for line in f:
                 if 'card' in db_path:
                     col=line.split('\t')
