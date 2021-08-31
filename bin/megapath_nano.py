@@ -5013,7 +5013,7 @@ if __name__ == '__main__':
     
     
     CWD=os.path.dirname(os.path.realpath(__file__))
-    NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    NANO_DIR=os.path.dirname(CWD)
     parser.add_argument('--temp_folder', help='temporary folder', default='')
     parser.add_argument('--RAM_folder', help='temporary folder in RAM', default='/run/shm')
     parser.add_argument('--taxonomy_db', help='taxonomy database', default=f'{NANO_DIR}/db/ncbi_taxonomy.db')
