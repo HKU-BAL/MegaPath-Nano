@@ -8,7 +8,7 @@ The ultra-long ONT sequencing technology benefits metagenomic profiling with hig
 
 ## Prerequisites
 
-Storage requirement: ~80G
+Storage requirement: 80G
 
 ## Option 1: Bioconda
 ```
@@ -29,14 +29,25 @@ conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 
-conda create -n mpn python=3.6
+conda create -n mpn python=3.6.10
 conda activate mpn
 
 # installing all dependencies for both modules
-conda install pandas==1.1.5 psutil==5.6.5 pybedtools==0.8.0 porechop==0.2.4 bioconvert==0.4.3 seqtk==1.3 minimap2==2.21 bcftools==1.9 samtools==1.9 pysam==0.16.0 tabulate==0.8.9 cgecore==1.5.6 ncbi-amrfinderplus==3.10.5 rgi==5.2.0 biopython==1.72 pyahocorasick==1.1.7 filetype==1.0.7libdeflate==1.6
+conda install pandas==1.1.5 psutil==5.6.5 pybedtools==0.8.0 porechop==0.2.4 bioconvert==0.4.3 seqtk==1.3 minimap2==2.21 bcftools==1.9 "samtools>=1.10" pysam==0.16.0 tabulate==0.8.9 cgecore==1.5.6 "ncbi-amrfinderplus>=3" "rgi>=5" biopython==1.72 pyahocorasick==1.1.7 filetype==1.0.7 libdeflate==1.6
+# MegaPath-Nano-Amplicon filter module
+conda install clair=2.1.1 parallel=20191122 
 
 # git clone MegaPath-Nano
 git clone --depth 1 https://github.com/HKU-BAL/MegaPath-Nano
+
+# MegaPath-Nano-Amplicon filter module
+cd MegaPath-Nano/bin/realignment/realign/
+g++ -std=c++14 -O1 -shared -fPIC -o realigner ssw_cpp.cpp ssw.c realigner.cpp
+g++ -std=c++11 -shared -fPIC -o debruijn_graph -O3 debruijn_graph.cpp
+gcc -Wall -O3 -pipe -fPIC -shared -rdynamic -o libssw.so ssw.c ssw.h
+cd - 
+cd MegaPath-Nano/bin/Clair-ensemble/Clair.beta.ensemble.cpu/clair/ensemble
+g++ ensemble.cpp -o ensemble
 ```
 
 ## Option 3: Docker
@@ -56,15 +67,17 @@ sudo docker run -it mpn_image /bin/bash
 cd ${MEGAPATH_NANO_DIR}
 
 # Taxon
-wget http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano_db.v1.0.tar.gz
-tar -xvzf MegaPath-Nano_db.v1.0.tar.gz
+wget -c http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano_db.v1.0.tar.gz -O - | tar -xvz
 
 # AMR
 rgi load --card_json bin/amr_db/card/card.json
 amrfinder -u
+
+# Amplicon filter module
+wget -c http://www.bio8.cs.hku.hk/dataset/MegaPath-Nano/MegaPath-Nano-Amplicon_db.v1.0.tar.gz -O - | tar -xvz
 ```
 
-## Alternative: Online Database Installation
+## Alternative: Online Database Installation for taxon and AMR detection
 The latest RefSeq database can be downloaded with the scripts under db_preparation/. 
 ```
 # Taxon
@@ -136,6 +149,9 @@ required arguments:
 optional arguments:
   --taxon TAXON               Taxon-specific options for AMRFinder [e.g. --taxon Escherichia], see usage for the full list of curated organisms
   --threads THREADS           Max num of threads, default: available num of cores
+
+(6) Run amplicon filter module with **FASTQ**
+./MegaPath-Nano/bin/runMegaPath-Nano-Amplicon.sh -r ${fq}
 ```
 
 

@@ -102,10 +102,11 @@ def Align(*,
           aligner_options=None,
           paf_path_and_prefix=None,
           mapping_only=False,
-          taxon_and_AMR_module_option='',
+          module_option='',
           AMR_output_folder='',
           align_concat_fa=False,
           ):
+    NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
 
     if align_concat_fa==False:
@@ -114,7 +115,6 @@ def Align(*,
             num_target_specification += 1
         if target_assembly_list is not None and target_assembly_list['assembly_id'].shape[0] > 0:
             num_target_specification += 1
-
         if num_target_specification != 1:
             os.sys.exit('Exactly one of target_filename_list and target_assembly_list must be specified')
 
@@ -181,7 +181,6 @@ def Align(*,
     if output_PAF == True:
         paf_filename = f'{paf_path_and_prefix}.paf'
         sam_filename = f'{paf_path_and_prefix}.sam'
-        sam_file = os.open(sam_filename, flags=os.O_CREAT |  os.O_WRONLY|os.O_TRUNC, mode=0o644)
 
     #  align query to target (input from named pipe)
     aligner_command = [global_options['aligner'],]
@@ -198,6 +197,7 @@ def Align(*,
         aligner_command.extend(query_filename_list['path'])
         aligner_command.extend(['--split-prefix','tmp'])
         if output_PAF == True:
+            sam_file = os.open(sam_filename, flags=os.O_CREAT |  os.O_WRONLY|os.O_TRUNC, mode=0o644)
             aligner_stdout=sam_file
         else:
             aligner_stdout=subprocess.PIPE
@@ -216,14 +216,24 @@ def Align(*,
             cat_process.wait()
 
     elif align_concat_fa==True:
-        aligner_command.append(f'{os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))}/genomes/refseq/refseq.fna.gz')
+        if module_option!='amplicon_filter_module':
+            aligner_command.append(f'{NANO_DIR}/genomes/refseq/refseq.fna.gz')
+        else:
+            aligner_command.append(f'{target_filename_list["path"][0]}')
         aligner_command.extend(query_filename_list['path'])
-        if output_PAF == True:
+        if output_PAF == True:# and module_option!='amplicon_filter_module':
+            sam_file = os.open(sam_filename, flags=os.O_CREAT |  os.O_WRONLY|os.O_TRUNC, mode=0o644)
             aligner_stdout=sam_file
         else:
             aligner_stdout=subprocess.PIPE
         
         aligner_process = subprocess.Popen(aligner_command, close_fds=True, stdout=aligner_stdout, stderr=log_file)
+        #if module_option=='amplicon_filter_module':
+        #    bam_output = subprocess.check_output(('samtools', 'sort','-o',f'{paf_path_and_prefix}.bam'), stdin=aligner_process.stdout)
+        #    aligner_process.wait()
+        #    index_process = subprocess.Popen(('samtools','index',f'{paf_path_and_prefix}.bam'))
+        #    index_process.wait()
+        #    os.sys.exit('Finished amplicon filter module.')
 
     if output_PAF == True:
         if align_concat_fa==False:
@@ -231,11 +241,14 @@ def Align(*,
             os.close(temp_pipe_target_fasta)
         aligner_process.wait()
         bam_filename=f'{paf_path_and_prefix}.bam'
-        bam_operation_command = f'samtools view -F1796 -b {sam_filename}|samtools sort -o {bam_filename};samtools index {bam_filename};'
-        if taxon_and_AMR_module_option=='taxon_and_AMR_module' or taxon_and_AMR_module_option=='AMR_module_only':
-            bam_operation_command+=f'python {os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
+        exclude_flag='1796'
+        if module_option=='amplicon_filter_module':
+            exclude_flag='4'
+        bam_operation_command = f'samtools view -F{exclude_flag} -b {sam_filename}|samtools sort -o {bam_filename};samtools index {bam_filename};'
+        if module_option in ['taxon_and_AMR_module','AMR_module_only']:
+            bam_operation_command+=f'python {NANO_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
-        if taxon_and_AMR_module_option=='AMR_module_only':
+        if module_option in ['AMR_module_only','amplicon_filter_module']:
             os.sys.exit('Finished alignment step.')
         convert=SAM2PAF(sam_filename,paf_filename)
         convert(pri_only=False)
