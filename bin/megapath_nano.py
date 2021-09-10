@@ -1108,7 +1108,10 @@ def step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter):
 
     human_and_decoy_filter.O.query_filename_list = human_and_decoy_filter.I.query_filename_list.copy()
 
-    target_assembly_list = pandas.concat([human_and_decoy_filter.I.human_assembly_list, human_and_decoy_filter.I.decoy_assembly_list], axis=0)
+    if FLAGS.module_option == 'amplicon_filter_module':
+        target_assembly_list = None
+    else:
+        target_assembly_list = pandas.concat([human_and_decoy_filter.I.human_assembly_list, human_and_decoy_filter.I.decoy_assembly_list], axis=0)
 
     align_list = Align(
                        assembly_metadata=megapath_nano.assembly_metadata,
@@ -1117,16 +1120,22 @@ def step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter):
                        log_file=megapath_nano.aligner_log,
                        query_filename_list=human_and_decoy_filter.I.query_filename_list,
                        target_assembly_list=target_assembly_list,
+                       target_filename_list=human_and_decoy_filter.I.target_filename_list,
                        aligner_options=shlex.split(megapath_nano.global_options['alignerThreadOption'] + ' -x map-ont'),
                        mapping_only=megapath_nano.global_options['mapping_only'],
                     )
 
     # human filtering first, then decoy filtering 
 
+    left_on_col=''
+    if FLAGS.module_option == 'amplicon_filter_module':
+        left_on_col='sequence_id'
+    else:
+        left_on_col='assembly_id'
     human_best_align_list = align_list.merge(
                                              right=human_and_decoy_filter.I.human_assembly_list.set_index('assembly_id'),
                                              how='inner', 
-                                             left_on='assembly_id', 
+                                             left_on=left_on_col, 
                                              right_index = True,
                                              suffixes=['', '_y'],
                                              validate='m:1',
@@ -1142,6 +1151,7 @@ def step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter):
     
     human_and_decoy_filter.O.human_read_id_list = human_and_decoy_filter.O.human_best_align_list[['read_id', 'read_length']].sort_values(['read_id', 'read_length']).drop_duplicates()
 
+
     remaining_align_list = align_list.merge(
                                             right=human_and_decoy_filter.O.human_read_id_list.set_index('read_id').rename(columns={'read_length': 'filtered'}),
                                             how='left', 
@@ -1151,14 +1161,17 @@ def step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter):
                                             validate='m:1',
                                            ).fillna(0).query('filtered == 0').drop(['filtered'], axis=1)
 
-    decoy_best_align_list = remaining_align_list.merge(
-		                                               right=human_and_decoy_filter.I.decoy_assembly_list.set_index('assembly_id'),
-		                                               how='inner', 
-		                                               left_on='assembly_id', 
-		                                               right_index = True,
-		                                               suffixes=['', '_y'],
-		                                               validate='m:1',
-		                                              ).sort_values(['read_id', 'alignment_score', 'alignment_score_tiebreaker']).drop_duplicates(subset=['read_id'], keep='last')
+    if FLAGS.module_option == 'amplicon_filter_module':
+        decoy_best_align_list=remaining_align_list.drop_duplicates(subset=['read_id'], keep='last')
+    else:
+        decoy_best_align_list = remaining_align_list.merge(
+                                                                   right=human_and_decoy_filter.I.decoy_assembly_list.set_index('assembly_id'),
+                                                                   how='inner', 
+                                                                   left_on='assembly_id', 
+                                                                   right_index = True,
+                                                                   suffixes=['', '_y'],
+                                                                   validate='m:1',
+                                                                  ).sort_values(['read_id', 'alignment_score', 'alignment_score_tiebreaker']).drop_duplicates(subset=['read_id'], keep='last')
 
     human_and_decoy_filter.O.decoy_best_align_list = decoy_best_align_list.query('alignment_score >= @human_and_decoy_filter.I.decoy_min_alignment_score or alignment_score * 100 / read_length >= @human_and_decoy_filter.I.decoy_min_alignment_score_percent')
 
@@ -1186,17 +1199,6 @@ def step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter):
                                       					                                                validate='1:1',
                                       					                                               ).fillna(0).query('filtered == 0').drop(['filtered'], axis=1)[['read_id', 'read_length']]
     
-    print("human_and_decoy_filter.O.human_read_id_list.shape[0]")
-    print(human_and_decoy_filter.O.human_read_id_list.shape[0])
-    
-    print("human_and_decoy_filter.O.decoy_read_id_list.shape[0]")
-    print(human_and_decoy_filter.O.decoy_read_id_list.shape[0])
-    
-    print("human_and_decoy_filter.O.microbe_read_id_list.shape[0]")
-    print(human_and_decoy_filter.O.microbe_read_id_list.shape[0])
-    
-    print("human_and_decoy_filter.I.read_id_list.shape[0]")
-    print(human_and_decoy_filter.I.read_id_list.shape[0])
     """
     if human_and_decoy_filter.O.human_read_id_list.shape[0] + human_and_decoy_filter.O.decoy_read_id_list.shape[0] + human_and_decoy_filter.O.microbe_read_id_list.shape[0] != human_and_decoy_filter.I.read_id_list.shape[0]:
         raise RuntimeError('Total number of reads not match')
@@ -1264,16 +1266,17 @@ def step_placement_to_species(megapath_nano, placement_to_species):
                                               log_file=megapath_nano.aligner_log,
                                               query_filename_list=placement_to_species.I.query_filename_list,
                                               target_assembly_list=placement_to_species.I.target_assembly_list,
+                                              target_filename_list=placement_to_species.I.target_filename_list,
                                               aligner_options=shlex.split(megapath_nano.global_options['alignerThreadOption'] + ' -N 50 -p 1 -x map-ont --split-prefix tmp'),
                                               paf_path_and_prefix=placement_to_species.I.paf_path_and_prefix,
                                               mapping_only=megapath_nano.global_options['mapping_only'],
-                                              taxon_and_AMR_module_option=FLAGS.taxon_and_AMR_module_option,
+                                              module_option=FLAGS.module_option,
                                               align_concat_fa=True,
                                               AMR_output_folder=f'{megapath_nano.output_folder}/{file_prefix_with_path}_amr/')
     if megapath_nano.global_options['debug'] == True:
         placement_to_species.O.align_list.to_csv(path_or_buf=file_prefix_with_path + '.species_align_list', sep='\t', header=True, index=False)
 
-    if FLAGS.taxon_and_AMR_module_option=='AMR_module_only':
+    if FLAGS.module_option in ['AMR_module_only','amplicon_filter_module']:
         os.sys.exit('Finished alignment.')
     if FLAGS.reassignment == True:
         placement_to_species.O.align_list=Reassign(align_list=placement_to_species.O.align_list,
@@ -4014,7 +4017,7 @@ def main():
     num_core = psutil.cpu_count(logical=True)
     ram_available = psutil.virtual_memory().available
     if megapath_nano.global_options['max_aligner_target_GBase_per_batch']=='auto':
-        megapath_nano.global_options['max_aligner_target_GBase_per_batch'] = str(ram_available // 1024 // 1024 // 1024 // 8 )
+        megapath_nano.global_options['max_aligner_target_GBase_per_batch'] = str(ram_available // 1024 // 1024 // 1024 // 8 // 8) # lower minimap2 index load
 
     megapath_nano.global_options['alignerThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_aligner_thread'])) + ' -I ' + megapath_nano.global_options['max_aligner_target_GBase_per_batch'] + 'G'
     megapath_nano.global_options['porechopThreadOption'] = '-t ' + str(min(num_core, megapath_nano.global_options['max_porechop_thread']))
@@ -4128,20 +4131,25 @@ def main():
     human_and_decoy_filter.I.decoy_min_alignment_score = megapath_nano.global_options['decoy_filter_alignment_score_threshold']
     human_and_decoy_filter.I.decoy_min_alignment_score_percent = megapath_nano.global_options['decoy_filter_alignment_score_percent_threshold']
 
-    if FLAGS.human_filter == True and megapath_nano.global_options['human'] != '':
-        megapath_nano.log.print('Human filter genome set: ' + megapath_nano.global_options['human'])
+    if FLAGS.module_option == 'amplicon_filter_module':
+        human_and_decoy_filter.I.target_filename_list = pandas.DataFrame.from_dict({'assembly_id': [FLAGS.amplicon_human_filter_db_sequence_id,'amplicon_decoy_filter_db'],'path': [FLAGS.amplicon_human_filter_db_path,FLAGS.amplicon_decoy_filter_db_path]})
         human_and_decoy_filter.I.human_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['human'])
-    else:
-        human_and_decoy_filter.I.human_assembly_list = pandas.DataFrame(columns=['assembly_id'])
-
-    if FLAGS.decoy_filter == True and megapath_nano.global_options['decoy'] != '':
-        megapath_nano.log.print('Decoy filter genome set: ' + megapath_nano.global_options['decoy'])
-        human_and_decoy_filter.I.decoy_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['decoy'])
-    else:
         human_and_decoy_filter.I.decoy_assembly_list = pandas.DataFrame(columns=['assembly_id'])
+    else:
+        if FLAGS.human_filter == True and megapath_nano.global_options['human'] != '':
+            megapath_nano.log.print('Human filter genome set: ' + megapath_nano.global_options['human'])
+            human_and_decoy_filter.I.human_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['human'])
+        else:
+            human_and_decoy_filter.I.human_assembly_list = pandas.DataFrame(columns=['assembly_id'])
+
+        if FLAGS.decoy_filter == True and megapath_nano.global_options['decoy'] != '':
+            megapath_nano.log.print('Decoy filter genome set: ' + megapath_nano.global_options['decoy'])
+            human_and_decoy_filter.I.decoy_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['decoy'])
+        else:
+            human_and_decoy_filter.I.decoy_assembly_list = pandas.DataFrame(columns=['assembly_id'])
 
 
-    if human_and_decoy_filter.I.human_assembly_list.empty == False or human_and_decoy_filter.I.decoy_assembly_list.empty == False:
+    if human_and_decoy_filter.I.human_assembly_list.empty == False or human_and_decoy_filter.I.decoy_assembly_list.empty == False or FLAGS.module_option=='amplicon_filter_module':
         step_human_and_decoy_filter(megapath_nano, human_and_decoy_filter)
         if FLAGS.output_human_and_decoy_filtered_query == True:
             for filename in human_and_decoy_filter.O.query_filename_list['path']:
@@ -4173,8 +4181,8 @@ def main():
     # human_and_decoy_filter.O.microbe_read_id_list       format: ['read_id', 'read_length']
     
     
-    if FLAGS.all_taxon_steps == False:
-        print('Finished all taxon steps')
+    if FLAGS.all_taxon_module_steps == False:
+        print('Finished fastq filtering.')
         os.sys.exit()
     
     
@@ -4185,7 +4193,11 @@ def main():
 
     placement_to_species.I.query_filename_list = human_and_decoy_filter.O.query_filename_list
     placement_to_species.I.species_ID_min_aligned_bp = megapath_nano.global_options['species_id_min_aligned_bp']
-    placement_to_species.I.target_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['species'])
+    if FLAGS.module_option=='amplicon_filter_module':
+        placement_to_species.I.target_filename_list = pandas.DataFrame.from_dict({'assembly_id': ['amplicon_taxon_filter_db'],'path': [FLAGS.amplicon_taxon_filter_db_path]})
+        placement_to_species.I.target_assembly_list = pandas.DataFrame(columns=['assembly_id'])
+    else:
+        placement_to_species.I.target_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['species'])
 
     if FLAGS.output_PAF == True:
         placement_to_species.I.paf_path_and_prefix = os.path.join(megapath_nano.output_folder, megapath_nano.output_prefix + '.species')
@@ -4885,13 +4897,14 @@ if __name__ == '__main__':
     group_reassign_read_id.add_argument('--no-reassign_read_id', dest='reassign_read_id', action='store_false')
     
     group_filter_fq_only = parser.add_mutually_exclusive_group(required=False)
-    group_filter_fq_only.add_argument('--all_taxon_steps', dest='all_taxon_steps', action='store_true')
-    group_filter_fq_only.add_argument('--filter_fq_only', dest='all_taxon_steps', action='store_false')
+    group_filter_fq_only.add_argument('--all_taxon_module_steps', dest='all_taxon_module_steps', action='store_true')
+    group_filter_fq_only.add_argument('--filter_fq_only', dest='all_taxon_module_steps', action='store_false')
 
-    group_taxon_and_AMR_module_option = parser.add_mutually_exclusive_group(required=False)
-    group_taxon_and_AMR_module_option.add_argument('--taxon_and_AMR_module', dest='taxon_and_AMR_module_option', action='store_const',const='taxon_and_AMR_module')
-    group_taxon_and_AMR_module_option.add_argument('--taxon_module_only', dest='taxon_and_AMR_module_option', action='store_const',const='taxon_module_only')
-    group_taxon_and_AMR_module_option.add_argument('--AMR_module_only', dest='taxon_and_AMR_module_option', action='store_const',const='AMR_module_only')
+    group_module_option = parser.add_mutually_exclusive_group(required=False)
+    group_module_option.add_argument('--taxon_and_AMR_module', dest='module_option', action='store_const',const='taxon_and_AMR_module')
+    group_module_option.add_argument('--taxon_module_only', dest='module_option', action='store_const',const='taxon_module_only')
+    group_module_option.add_argument('--AMR_module_only', dest='module_option', action='store_const',const='AMR_module_only')
+    group_module_option.add_argument('--amplicon_filter_module', dest='module_option', action='store_const',const='amplicon_filter_module')
     
     group_reassignment = parser.add_mutually_exclusive_group(required=False)
     group_reassignment.add_argument('--reassignment', dest='reassignment', action='store_true')
@@ -4980,8 +4993,8 @@ if __name__ == '__main__':
     parser.set_defaults(noise_projection=False)
     parser.set_defaults(similar_species_marker=False)
     parser.set_defaults(reassign_read_id=False)
-    parser.set_defaults(all_taxon_steps=True)
-    parser.set_defaults(taxon_and_AMR_module_option='taxon_and_AMR_module')
+    parser.set_defaults(all_taxon_module_steps=True)
+    parser.set_defaults(module_option='taxon_and_AMR_module')
     parser.set_defaults(reassignment=False)
     parser.set_defaults(resolution='species')
 
@@ -5035,6 +5048,11 @@ if __name__ == '__main__':
     parser.add_argument('--max_aligner_target_GBase_per_batch', help='Maximum size of reference loaded in memory per batch by aligner', default='auto')
     parser.add_argument('--max_porechop_thread', help='Maximum number of threads used by porechop', type=int, default=64)
     parser.add_argument('--max_AMR_thread', help='Maximum number of threads used by AMR module', type=int, default=64)
+
+    parser.add_argument('--amplicon_human_filter_db_path', help='Human database path for amplicon filter module', default=f'{NANO_DIR}/genomes/refseq/vertebrate_mammalian/GCF_000001405.39/GCF_000001405.39_GRCh38.p13_genomic.fna.gz')
+    parser.add_argument('--amplicon_human_filter_db_sequence_id', help='Human database sequence id for amplicon filter module', default=f'NC_000001.11')
+    parser.add_argument('--amplicon_decoy_filter_db_path', help='Decoy database path for amplicon filter module', default=f'{NANO_DIR}/genomes/refseq/amplicon_filter/ORAL_MICROBIOME_genomic.no_Myc.fna')
+    parser.add_argument('--amplicon_taxon_filter_db_path', help='Taxon database path for amplicon filter module', default=f'{NANO_DIR}/genomes/refseq/amplicon_filter/refseq.fna.no_blastid85_tb.nomyc.onlytb.gz')
 
     parser.add_argument('--genus_height', help='Height in taxonomy to be considered as genus. Full rank info in db_preparation/genAssemblyMetadata.py', type=int, default=11)
 

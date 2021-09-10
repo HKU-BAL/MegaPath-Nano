@@ -246,7 +246,7 @@ if __name__ == "__main__":
     parser.add_argument('--blast_perc_identity', default=90, help='The threshold of percentage of identical matches in blast')
     parser.add_argument('--blast_qcov_hsp_perc', default=60, help='The threshold of percentage of query coverage in blast')
     CWD=os.path.dirname(os.path.realpath(__file__))
-    NANO_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    NANO_DIR=os.path.dirname(CWD)
     parser.add_argument('--REFSEQ_PATH', default=f'{NANO_DIR}/genomes/refseq/refseq.fna.gz', help='The path of reference files. RefSeq by default')
     parser.add_argument('--NANO_DIR_PATH', default=NANO_DIR, help='The path of root directory of MegaPath-Nano')
     parser.add_argument('--CBMAR_PROT_DB_PATH', default=f'{NANO_DIR}/bin/amr_db/cbmar/cbmar_prot.fsa', help='The path of betalactamase family details in protein, collected from http://proteininformatics.org/mkumar/lactamasedb/cllasification.html.')
