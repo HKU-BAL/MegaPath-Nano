@@ -1,0 +1,1 @@
+/autofs/bal13/wwlui/bioconda/test_mp/test/MegaPath/scripts/amplicon/get_highestAS_read_match_target.py
