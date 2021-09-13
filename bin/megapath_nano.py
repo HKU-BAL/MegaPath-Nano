@@ -4136,6 +4136,7 @@ def main():
         human_and_decoy_filter.I.human_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['human'])
         human_and_decoy_filter.I.decoy_assembly_list = pandas.DataFrame(columns=['assembly_id'])
     else:
+        human_and_decoy_filter.I.target_filename_list = None
         if FLAGS.human_filter == True and megapath_nano.global_options['human'] != '':
             megapath_nano.log.print('Human filter genome set: ' + megapath_nano.global_options['human'])
             human_and_decoy_filter.I.human_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['human'])
@@ -4197,6 +4198,7 @@ def main():
         placement_to_species.I.target_filename_list = pandas.DataFrame.from_dict({'assembly_id': ['amplicon_taxon_filter_db'],'path': [FLAGS.amplicon_taxon_filter_db_path]})
         placement_to_species.I.target_assembly_list = pandas.DataFrame(columns=['assembly_id'])
     else:
+        placement_to_species.I.target_filename_list = None
         placement_to_species.I.target_assembly_list = read_genome_set(global_options=megapath_nano.global_options, genome_set_name=megapath_nano.global_options['species'])
 
     if FLAGS.output_PAF == True:

@@ -3,6 +3,12 @@
 # - multi-sample (does not like MES, just one sample) (SAMPLE_INDEX)
 # - multi-depths (downsampled by me, or downsampled by variant bam) (DEPTH_INDEX / BAM_INDEX)
 # - multi-models (different clair models) (MODEL_INDEX)
+
+# default params
+REFERENCE_FASTA_FILE_PATH=$DB/amplicon/Mycobacterium_tuberculosis_H37Rv_genome_v3.fasta
+CLAIR_MODELS=("$SCRIPT_PATH/Clair-ensemble/model/model-000016")
+PARALLEL_THREADS=24
+
 while getopts b:d:r:m:t: option
 do
     case "${option}"
@@ -24,8 +30,6 @@ SCRIPT=$(readlink -f $0)
 SCRIPT_PATH=$(dirname ${SCRIPT})
 NANO_DIR=$(dirname ${SCRIPT_PATH})
 DB=${SCRIPT_PATH}/db
-#REFERENCE_FASTA_FILE_PATH=$DB/amplicon/Mycobacterium_tuberculosis_H37Rv_genome_v3.fasta
-#CLAIR_MODELS=("$SCRIPT_PATH/Clair-ensemble/model/model-000016")
 ROOT_FOLDER_PATH="$BAM_FILE_PATH.clair-ensemble"
 CLAIR="$SCRIPT_PATH/Clair-ensemble/Clair.beta.ensemble.cpu/clair.py"
 CLAIR_HOME_DIR=`dirname ${CLAIR}`

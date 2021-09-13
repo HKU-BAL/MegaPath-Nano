@@ -245,20 +245,29 @@ def Align(*,
             cat_process.wait()
             os.close(temp_pipe_target_fasta)
         aligner_process.wait()
+        print('Finished species alignment step.')
         bam_filename=f'{paf_path_and_prefix}.bam'
         exclude_flag='1796'
         if module_option=='amplicon_filter_module':
             exclude_flag='4'
         bam_operation_command = f'samtools view -F{exclude_flag} -b {sam_filename}|samtools sort -o {bam_filename};samtools index {bam_filename};'
+<<<<<<< HEAD
         if module_option in ['taxon_and_AMR_module','AMR_module_only']:
 <<<<<<< HEAD
             bam_operation_command+=f'python {NANO_BIN_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
 =======
             bam_operation_command+=f'python {NANO_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
 >>>>>>> 5492202... add files for MegaPath-Nano-Amplicon
+=======
+>>>>>>> a24bde1... tidy up scripts
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
+        if module_option in ['taxon_and_AMR_module','AMR_module_only']:
+            bam_operation_process.wait()
+            run_amr_command=f'python {NANO_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
+            run_amr_process=subprocess.Popen(run_amr_command, shell=True)
         if module_option in ['AMR_module_only','amplicon_filter_module']:
-            os.sys.exit('Finished alignment step.')
+            bam_operation_process.wait()
+            os.sys.exit()
         convert=SAM2PAF(sam_filename,paf_filename)
         convert(pri_only=False)
         awk_stdin= os.open(paf_filename, flags=os.O_RDONLY)

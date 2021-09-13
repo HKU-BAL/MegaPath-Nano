@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 while getopts b:v:r:c:p:o:t: option
 do
     case "${option}"
@@ -8,7 +7,7 @@ do
         v) VCF_PATH=("`readlink -f ${OPTARG}`");;
         r) REF_PATH=`readlink -f ${OPTARG}`;;
         c) CONTIGS=${OPTARG};;
-        p) PLATFORM=${OPTARG};;
+        p) PLATFORM=${OPTARG};; #[ont/illumina]
 		o) OUT_FOLDER=${OPTARG};;
         t) THREADS=${OPTARG};;
     esac
@@ -34,7 +33,7 @@ then
         --bam_fn {1} \
         --ref_fn ${REF_PATH} \
         --read_fn ${ILLUMINA_REALIGN_BAM_FOLDER}/{1/} \
-        --samtools samtools \
+        --samtools ${SCRIPT_DIR}/samtools-1.13/samtools \
         --ctgName ${CONTIGS}" ::: ${BAM_PATH[@]}
 
     ls ${ILLUMINA_REALIGN_BAM_FOLDER}/*.bam | parallel -j20 samtools index {}
