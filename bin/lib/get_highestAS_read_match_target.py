@@ -22,7 +22,6 @@ align_list=pandas.DataFrame.from_dict(dict)
 align_list_groupby_read_id=align_list.groupby(['read_id'])
 align_list['alm_max'] = align_list_groupby_read_id['alignment_score'].transform(max)
 align_list=align_list[align_list['alignment_score']==align_list['alm_max']]
-#import pdb;pdb.set_trace()
 merged=align_list.merge(target_seqid_df,on=['sequence_id'])
 merged['read_id'].drop_duplicates().to_csv(f'{in_bam}.highestAS_read_match_target.list',header=None,index=False)
 

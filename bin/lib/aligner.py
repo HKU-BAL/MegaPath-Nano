@@ -106,7 +106,8 @@ def Align(*,
           AMR_output_folder='',
           align_concat_fa=False,
           ):
-    NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    NANO_BIN_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    NANO_DIR=os.path.dirname(NANO_BIN_DIR)
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
 
     if align_concat_fa==False:
@@ -246,7 +247,7 @@ def Align(*,
             exclude_flag='4'
         bam_operation_command = f'samtools view -F{exclude_flag} -b {sam_filename}|samtools sort -o {bam_filename};samtools index {bam_filename};'
         if module_option in ['taxon_and_AMR_module','AMR_module_only']:
-            bam_operation_command+=f'python {NANO_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
+            bam_operation_command+=f'python {NANO_BIN_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
         if module_option in ['AMR_module_only','amplicon_filter_module']:
             os.sys.exit('Finished alignment step.')
