@@ -106,12 +106,8 @@ def Align(*,
           AMR_output_folder='',
           align_concat_fa=False,
           ):
-<<<<<<< HEAD
     NANO_BIN_DIR=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     NANO_DIR=os.path.dirname(NANO_BIN_DIR)
-=======
-    NANO_DIR=os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
->>>>>>> 5492202... add files for MegaPath-Nano-Amplicon
     local_temp_dir_name = tempfile.mkdtemp(prefix='Align.', dir=temp_dir_name)
 
     if align_concat_fa==False:
@@ -251,15 +247,8 @@ def Align(*,
         if module_option=='amplicon_filter_module':
             exclude_flag='4'
         bam_operation_command = f'samtools view -F{exclude_flag} -b {sam_filename}|samtools sort -o {bam_filename};samtools index {bam_filename};'
-<<<<<<< HEAD
         if module_option in ['taxon_and_AMR_module','AMR_module_only']:
-<<<<<<< HEAD
             bam_operation_command+=f'python {NANO_BIN_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
-=======
-            bam_operation_command+=f'python {NANO_DIR}/megapath_nano_amr.py --query_bam {bam_filename} --output_folder {AMR_output_folder} --threads {global_options["AMRThreadOption"]}'
->>>>>>> 5492202... add files for MegaPath-Nano-Amplicon
-=======
->>>>>>> a24bde1... tidy up scripts
         bam_operation_process = subprocess.Popen(bam_operation_command, shell=True, stderr=subprocess.DEVNULL)
         if module_option in ['taxon_and_AMR_module','AMR_module_only']:
             bam_operation_process.wait()
