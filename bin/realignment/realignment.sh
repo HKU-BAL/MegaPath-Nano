@@ -17,6 +17,7 @@ done
 PYPY=pypy3
 SCRIPT=$(readlink -f $0)
 SCRIPT_PATH=$(dirname ${SCRIPT})
+SCRIPT_DIR=$(dirname ${SCRIPT_PATH})
 DATE_TIME=`date "+%Y%m%d_%H%M%S"`
 mkdir -p ${OUT_FOLDER}
 mkdir -p ${OUT_FOLDER}/tmp
@@ -51,7 +52,7 @@ time parallel --joblog  ./${i}_create_tensor_pileup.log -j${THREADS} \
 --ref_fn ${REF_PATH} \
 --pos {1} \
 --platform ${PLATFORM} \
---samtools `which samtools` \
+--samtools ${SCRIPT_DIR}/samtools-1.13/samtools \
 ${IF_LOCAL_REALIGNMENT_ILLUMINA_REALIGN_FOLDER_FLAG} ${ILLUMINA_REALIGN_BAM_FOLDER} \
 --ctgName ${CONTIGS} \
 --output_fn ${OUT_FOLDER}/tmp/${i}_output_{#}" ::: ${ALL_POS[@]} |& tee  ./${i}_CTP.log
