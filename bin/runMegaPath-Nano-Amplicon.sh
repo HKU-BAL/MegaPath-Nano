@@ -27,7 +27,6 @@ done
 
 if [ -z "${READ}" ] ; then
    echo "Usage: $0 -r <read.fq> [options]"
-   echo "    -p  output prefix [megapath-nano-amplicon]"
    echo "    -t  number of threads [24]"
    echo "    -d  database directory [${SCRIPT_PATH}/db]"
    exit 1
