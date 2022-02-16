@@ -49,8 +49,8 @@ else
 	STARTTIME=$(date +%s)
     
     $SCRIPT_PATH/megapath_nano.py --query ${READ} --amplicon_filter_module --decoy_filter_alignment_score_percent_threshold 150 || true
-    python $SCRIPT_PATH/lib/get_highestAS_read_match_target.py ${PREFIX%.*}.species.bam  
-    seqtk subseq $PREFIX.adaptor_trimmed.trimmed_and_filtered.human_and_decoy_filtered ${PREFIX%.*}.species.bam.highestAS_read_match_target.list > $PREFIX.adaptor_trimmed.trimmed_and_filtered.human_and_decoy_filtered.taxonfiltered
+    python $SCRIPT_PATH/lib/get_highestAS_read_match_target.py `echo $PREFIX|sed 's/\..*//'`.species.bam  
+    seqtk subseq $PREFIX.adaptor_trimmed.trimmed_and_filtered.human_and_decoy_filtered `echo $PREFIX|sed 's/\..*//'`.species.bam.highestAS_read_match_target.list > $PREFIX.adaptor_trimmed.trimmed_and_filtered.human_and_decoy_filtered.taxonfiltered
     run_minimap2 $TARGET_IDX  $PREFIX.adaptor_trimmed.trimmed_and_filtered.human_and_decoy_filtered.taxonfiltered
 	echo "[TIMESTAMP] $(date) Running MegaPath-Nano filtering... Done"
 	ENDTIME=$(date +%s)
