@@ -29,8 +29,8 @@ Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9
 | Fosfomycin  | / | / | S | / | / |
 
 ** Use of the abbreviation:  
-S: sensitive  
-R: resistant  
-M: moderate  
-\+: presence  
+S: Sensitive  
+R: Resistant  
+M: Moderate  
+\+: Presence  
 /: Not tested  
