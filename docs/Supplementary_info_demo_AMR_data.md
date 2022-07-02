@@ -28,7 +28,7 @@ Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9
 | Colistin  | / | / | S | / | / |
 | Fosfomycin  | / | / | S | / | / |
 
-** Use of the abbreviation:  
+** Use of the abbreviations:  
 S: Sensitive  
 R: Resistant  
 M: Moderate  
