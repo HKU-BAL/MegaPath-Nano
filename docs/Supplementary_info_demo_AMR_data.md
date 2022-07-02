@@ -30,7 +30,7 @@ Samples were prepared using ONT Rapid Sequencing Kit, and sequenced using ONT R9
 
 ** Use of the abbreviation:  
 S: sensitive  
-R: resistance  
+R: resistant  
 M: moderate  
 \+: presence  
-/: Not checked  
+/: Not tested  
